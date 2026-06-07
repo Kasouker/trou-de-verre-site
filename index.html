@@ -154,6 +154,10 @@
     .eyes-2 { bottom: 22%; right: 14%; animation-delay: 7s; }
     .eyes-3 { top: 30%; right: 22%; animation-delay: 9.5s; transform: scale(0.8); }
     .eyes-4 { bottom: 30%; left: 20%; animation-delay: 5.5s; transform: scale(0.9); }
+    .eyes-5 { top: 12%; right: 8%; animation-delay: 2s; transform: scale(0.85); }
+    .eyes-6 { bottom: 14%; left: 36%; animation-delay: 8.5s; transform: scale(0.7); }
+    .eyes-7 { top: 48%; left: 7%; animation-delay: 4.5s; }
+    .eyes-8 { bottom: 38%; right: 28%; animation-delay: 6.5s; transform: scale(0.75); }
 
     @keyframes watch {
         0%, 100% { opacity: 0; }
@@ -525,14 +529,14 @@
         to   { opacity: 0; }
     }
     body.dismiss-hint .scroll-hint {
-        animation: hintOut 2.5s ease forwards;
+        animation: hintOut 1.8s ease forwards;
     }
     @keyframes contentOut {
         from { opacity: 1; transform: translateY(0); }
         to   { opacity: 0; transform: translateY(-26px); }
     }
     body.dismiss-content .hero-content {
-        animation: contentOut 1.4s ease forwards;
+        animation: contentOut 1s ease forwards;
     }
 </style>
 </head>
@@ -577,6 +581,10 @@
         <div class="eyes eyes-2"><span></span><span></span></div>
         <div class="eyes eyes-3"><span></span><span></span></div>
         <div class="eyes eyes-4"><span></span><span></span></div>
+        <div class="eyes eyes-5"><span></span><span></span></div>
+        <div class="eyes eyes-6"><span></span><span></span></div>
+        <div class="eyes eyes-7"><span></span><span></span></div>
+        <div class="eyes eyes-8"><span></span><span></span></div>
 
         <div class="hero-content">
             <div class="divider divider-top"></div>
@@ -733,7 +741,7 @@
             // 1. La molette "Descendre" s'évapore (2,5s)
             document.body.classList.add('dismiss-hint');
             // 2. Puis le reste du Hero disparaît (comme il est apparu)
-            setTimeout(() => document.body.classList.add('dismiss-content'), 2500);
+            setTimeout(() => document.body.classList.add('dismiss-content'), 1800);
             // 3. Une fois dissipé : on débloque le scroll et on descend vers le lore
             setTimeout(() => {
                 dismissed = true;
@@ -745,7 +753,7 @@
                 document.body.classList.remove('dismiss-hint', 'dismiss-content');
                 html.classList.remove('locked');
                 window.addEventListener('scroll', onScroll, { passive: true });
-            }, 2500 + 1400);
+            }, 2800);
         }
 
         // Après la sortie : le Hero réapparaît/disparaît selon le défilement
