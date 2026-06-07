@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Trou de Verre N°4</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700;800;900&family=Cinzel+Decorative:wght@400;700;900&family=Marcellus&family=Megrim&family=Metamorphous&family=MedievalSharp&family=Orbitron:wght@400;700;900&family=Michroma&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Creepster&family=Nosifer&family=Metal+Mania&family=Pirata+One&display=swap" rel="stylesheet">
+<style>
+    :root {
+        --void-black: #040308;
+        --deep-purple: #1a0b2e;
+        --nebula-purple: #9c6bde;
+        --nebula-violet: #6b3fa0;
+        --nebula-magenta: #c44fa0;
+        --eerie-glow: #b388ff;
+        --text-pale: #ece4ff;
+        --text-dim: #9a8bb5;
+        --horror-red: #8b1a2b;
+        --horror-red-glow: rgba(180, 30, 50, 0.55);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    html.locked, html.locked body { overflow: hidden; height: 100%; }
+
+    body {
+        background: var(--void-black);
+        color: var(--text-pale);
+        font-family: 'Cormorant Garamond', serif;
+        overflow-x: hidden;
+    }
+
+    /* ─── Starfield canvas ─── */
+    #starfield {
+        position: fixed;
+        inset: 0;
+        z-index: 0;
+        display: block;
+    }
+
+    /* ─── Brume globale (tout l'écran) ─── */
+    .smoke-global {
+        position: fixed;
+        inset: -50%;
+        width: 200%;
+        height: 200%;
+        z-index: 1;
+        pointer-events: none;
+        opacity: 0.12;
+        mix-blend-mode: screen;
+        animation: smokeGlobalMove 90s ease-in-out infinite alternate;
+    }
+    .smoke-global-2 {
+        opacity: 0.10;
+        animation: smokeGlobalMove2 115s ease-in-out infinite alternate;
+    }
+    @keyframes smokeGlobalMove {
+        0%   { transform: translate(-5%, 3%) scale(1.1); }
+        100% { transform: translate(6%, -4%) scale(1.35); }
+    }
+    @keyframes smokeGlobalMove2 {
+        0%   { transform: translate(5%, -3%) scale(1.2); }
+        100% { transform: translate(-6%, 4%) scale(1.4); }
+    }
+
+    /* ─── Hero ─── */
+    .hero {
+        position: relative;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        z-index: 2;
+        overflow: hidden;
+        padding: 2rem;
+        -webkit-mask-image: linear-gradient(to bottom, black 78%, transparent 100%);
+                mask-image: linear-gradient(to bottom, black 78%, transparent 100%);
+    }
+
+    /* Calque de nébuleuses global — même lumière dans toutes les sections */
+    .bg-glow {
+        position: fixed;
+        inset: 0;
+        z-index: 1;
+        pointer-events: none;
+        overflow: hidden;
+    }
+
+    /* Nébuleuses colorées diffuses */
+    .nebula {
+        position: absolute;
+        border-radius: 50%;
+        filter: blur(90px);
+        opacity: 0.5;
+        z-index: 1;
+        pointer-events: none;
+        animation: drift 28s ease-in-out infinite alternate;
+    }
+    .nebula-1 {
+        width: 700px; height: 700px;
+        top: -180px; left: -120px;
+        background: radial-gradient(circle, var(--nebula-violet), transparent 65%);
+    }
+    .nebula-2 {
+        width: 620px; height: 620px;
+        bottom: -160px; right: -100px;
+        background: radial-gradient(circle, var(--nebula-magenta), transparent 65%);
+        animation-delay: -8s;
+        opacity: 0.4;
+    }
+    .nebula-3 {
+        width: 500px; height: 500px;
+        top: 40%; left: 55%;
+        background: radial-gradient(circle, var(--nebula-purple), transparent 70%);
+        animation-delay: -14s;
+        opacity: 0.35;
+    }
+    @keyframes drift {
+        0%   { transform: translate(0, 0) scale(1); }
+        100% { transform: translate(40px, -30px) scale(1.12); }
+    }
+
+    /* Brume au sol (bas du hero) */
+    .ground-fog {
+        position: absolute;
+        bottom: 0; left: 0; right: 0;
+        height: 240px;
+        z-index: 1;
+        pointer-events: none;
+        background: linear-gradient(to top, rgba(50, 30, 70, 0.4), rgba(40, 25, 60, 0.12) 50%, transparent);
+    }
+
+    /* Yeux dans l'ombre (horreur) */
+    .eyes {
+        position: absolute;
+        z-index: 1;
+        display: flex;
+        gap: 14px;
+        opacity: 0;
+        animation: watch 11s ease-in-out infinite;
+        pointer-events: none;
+    }
+    .eyes span {
+        width: 9px; height: 9px;
+        border-radius: 50%;
+        background: var(--horror-red);
+        box-shadow: 0 0 12px 3px var(--horror-red-glow);
+    }
+    .eyes-1 { top: 18%; left: 12%; animation-delay: 3s; }
+    .eyes-2 { bottom: 22%; right: 14%; animation-delay: 7s; }
+    .eyes-3 { top: 30%; right: 22%; animation-delay: 9.5s; transform: scale(0.8); }
+    .eyes-4 { bottom: 30%; left: 20%; animation-delay: 5.5s; transform: scale(0.9); }
+
+    @keyframes watch {
+        0%, 100% { opacity: 0; }
+        45%      { opacity: 0; }
+        50%, 62% { opacity: 0.85; }
+        56%      { opacity: 0.1; }
+        70%      { opacity: 0; }
+    }
+
+    /* Contenu central */
+    .hero-content {
+        position: relative;
+        z-index: 3;
+    }
+
+    /* Barre décorative (haut + bas) */
+    .divider {
+        width: 0;
+        height: 1px;
+        margin: 2.5rem auto;
+        background: linear-gradient(90deg, transparent, var(--nebula-purple), transparent);
+        animation: expandLine 1.8s ease forwards 1.4s;
+    }
+    .divider-top {
+        margin: 0 auto 2.4rem;
+        animation: expandLine 1.4s ease forwards 0.3s;
+    }
+
+    /* Conteneur du titre (pour placer la brume derrière) */
+    .title-wrap {
+        position: relative;
+        display: inline-block;
+    }
+
+    /* Brume DERRIÈRE le titre (plus dense) */
+    .smoke-title {
+        position: absolute;
+        inset: -90% -35%;
+        z-index: 1;
+        pointer-events: none;
+        opacity: 0.22;
+        mix-blend-mode: screen;
+        -webkit-mask-image: radial-gradient(ellipse 62% 58% at 50% 50%, #000 12%, transparent 72%);
+                mask-image: radial-gradient(ellipse 62% 58% at 50% 50%, #000 12%, transparent 72%);
+        animation: smokeTitleMove 48s ease-in-out infinite alternate;
+    }
+    @keyframes smokeTitleMove {
+        0%   { transform: translate(-4%, 1%) scale(1.05); }
+        100% { transform: translate(5%, -3%) scale(1.2); }
+    }
+
+    .title {
+        position: relative;
+        z-index: 2;
+        font-family: 'Metamorphous', cursive;
+        font-weight: 400;
+        line-height: 1.15;
+        font-size: clamp(2.8rem, 9.5vw, 7rem);
+        letter-spacing: 0.04em;
+    }
+
+    /* "Trou de Verre" — brume violet-gris dans le texte */
+    .title-main {
+        display: block;
+        background: linear-gradient(
+            100deg,
+            #3a3352 0%,
+            #4c4470 25%,
+            #5f5685 50%,
+            #4c4470 75%,
+            #3a3352 100%
+        );
+        background-size: 200% 100%;
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+        filter: drop-shadow(0 0 18px rgba(80, 50, 120, 0.4));
+        opacity: 0;
+        animation: mistFlow 20s ease-in-out infinite, fadeUp 1.6s ease forwards 0.6s;
+    }
+    @keyframes mistFlow {
+        0%   { background-position: 0% 50%; }
+        50%  { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+
+    .title .nb {
+        display: block;
+        font-family: 'Metamorphous', cursive;
+        font-size: clamp(3.4rem, 12vw, 9rem);
+        font-weight: 400;
+        background: linear-gradient(180deg, var(--eerie-glow), var(--nebula-magenta));
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-top: 0.1em;
+        filter: drop-shadow(0 0 35px rgba(196, 79, 160, 0.5));
+        opacity: 0;
+        animation: fadeUp 1.6s ease forwards 0.9s;
+    }
+
+    .tagline {
+        font-family: 'Cormorant Garamond', serif;
+        font-style: italic;
+        font-size: clamp(1.1rem, 2.6vw, 1.7rem);
+        font-weight: 500;
+        color: var(--text-dim);
+        max-width: 620px;
+        margin: 0 auto;
+        line-height: 1.6;
+        opacity: 0;
+        animation: fadeUp 1.6s ease forwards 1.7s;
+    }
+
+    /* Indicateur de scroll */
+    .scroll-hint {
+        position: absolute;
+        bottom: 2.2rem;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 3;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.6rem;
+        opacity: 0;
+        animation: fadeIn 2s ease forwards 2.6s;
+    }
+    .scroll-hint span {
+        font-family: 'Cinzel', serif;
+        font-size: 0.65rem;
+        letter-spacing: 0.35em;
+        text-transform: uppercase;
+        color: var(--text-dim);
+    }
+    .scroll-hint .mouse {
+        width: 22px; height: 36px;
+        border: 1.5px solid var(--text-dim);
+        border-radius: 12px;
+        position: relative;
+    }
+    .scroll-hint .mouse::after {
+        content: '';
+        position: absolute;
+        top: 7px; left: 50%;
+        width: 3px; height: 7px;
+        background: var(--eerie-glow);
+        border-radius: 2px;
+        transform: translateX(-50%);
+        animation: scrollDot 1.8s ease-in-out infinite;
+    }
+
+    /* Vignette */
+    .vignette {
+        position: fixed;
+        inset: 0;
+        z-index: 4;
+        pointer-events: none;
+        background: radial-gradient(ellipse at center, transparent 42%, rgba(4, 3, 8, 0.9) 100%);
+    }
+
+    /* Grain */
+    .grain {
+        position: fixed;
+        inset: 0;
+        z-index: 5;
+        pointer-events: none;
+        opacity: 0.05;
+        background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    }
+
+    /* Animations communes */
+    @keyframes fadeUp {
+        from { opacity: 0; transform: translateY(24px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to   { opacity: 1; }
+    }
+    @keyframes expandLine {
+        from { width: 0; }
+        to   { width: 220px; }
+    }
+    @keyframes scrollDot {
+        0%   { opacity: 1; transform: translate(-50%, 0); }
+        100% { opacity: 0; transform: translate(-50%, 12px); }
+    }
+
+    /* ─────────────────────────────────────────
+       Section LORE
+    ───────────────────────────────────────────── */
+    .reveal {
+        opacity: 0;
+        transform: translateY(32px);
+        transition: opacity 1.3s ease, transform 1.3s ease;
+    }
+    .reveal.visible {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    .lore {
+        position: relative;
+        z-index: 2;
+        padding: 7rem 2rem 10rem;
+        display: flex;
+        justify-content: center;
+    }
+    .lore-inner {
+        max-width: 680px;
+        width: 100%;
+        text-align: center;
+    }
+
+    /* Séparateur ornemental en haut */
+    .lore-divider {
+        display: flex;
+        align-items: center;
+        gap: 1.3rem;
+        margin: 0 auto 4.5rem;
+    }
+    .lore-divider::before,
+    .lore-divider::after {
+        content: '';
+        height: 1px;
+        flex: 1;
+        background: linear-gradient(90deg, transparent, var(--nebula-violet), transparent);
+    }
+    .lore-divider span {
+        font-size: 1.1rem;
+        color: var(--eerie-glow);
+        text-shadow: 0 0 14px rgba(179, 136, 255, 0.6);
+    }
+
+    /* Paragraphes de lore */
+    .lore-text {
+        font-family: 'Cormorant Garamond', serif;
+        font-size: clamp(1.15rem, 2.4vw, 1.45rem);
+        font-weight: 400;
+        line-height: 2;
+        color: #b3a6cc;
+        margin: 0 0 2.8rem;
+    }
+
+    /* Phrase mise en valeur */
+    .lore-emphasis {
+        font-family: 'Cormorant Garamond', serif;
+        font-style: italic;
+        font-size: clamp(1.4rem, 3vw, 1.95rem);
+        font-weight: 500;
+        line-height: 1.7;
+        color: #d9ccf0;
+        margin: 3.8rem 0;
+        text-shadow: 0 0 25px rgba(156, 107, 222, 0.45);
+    }
+
+    /* Les deux phrases percutantes */
+    .lore-strike {
+        margin: 3.8rem 0;
+    }
+    .lore-strike p {
+        font-family: 'Cinzel', serif;
+        font-weight: 600;
+        font-size: clamp(1.2rem, 2.6vw, 1.6rem);
+        letter-spacing: 0.04em;
+        color: #e6cdf2;
+        margin: 0.5rem 0;
+        text-shadow: 0 0 20px rgba(196, 79, 160, 0.5);
+    }
+
+    /* Chute finale dramatique */
+    .lore-climax {
+        margin-top: 5.5rem;
+    }
+    .lore-climax p {
+        font-family: 'Cormorant Garamond', serif;
+        font-style: italic;
+        margin: 0.9rem 0;
+    }
+    .lore-climax .climax-1 {
+        font-size: clamp(1.3rem, 2.8vw, 1.7rem);
+        color: #8d7fad;
+    }
+    .lore-climax .climax-2 {
+        font-size: clamp(1.5rem, 3.2vw, 2rem);
+        color: #c4b3d6;
+        transition-delay: 0.4s;
+    }
+    .lore-climax .climax-3 {
+        font-family: 'Cinzel', serif;
+        font-style: normal;
+        font-weight: 700;
+        font-size: clamp(1.9rem, 4.5vw, 2.9rem);
+        color: #d6453f;
+        letter-spacing: 0.03em;
+        margin-top: 1.6rem;
+        transition-delay: 0.9s;
+        animation: dread 4.5s ease-in-out infinite;
+    }
+    @keyframes dread {
+        0%, 100% { text-shadow: 0 0 20px rgba(180, 30, 40, 0.55), 0 0 45px rgba(140, 20, 30, 0.35); }
+        50%      { text-shadow: 0 0 32px rgba(205, 45, 55, 0.8), 0 0 65px rgba(165, 25, 38, 0.55); }
+    }
+
+    /* ─── Section REJOINDRE ─── */
+    .join {
+        position: relative;
+        z-index: 2;
+        padding: 6rem 2rem 8rem;
+        display: flex;
+        justify-content: center;
+    }
+    .join-inner {
+        max-width: 580px;
+        width: 100%;
+        text-align: center;
+    }
+    .join-title {
+        font-family: 'Metamorphous', cursive;
+        font-size: clamp(1.8rem, 5vw, 2.8rem);
+        color: var(--text-pale);
+        letter-spacing: 0.04em;
+        margin-bottom: 1.5rem;
+        text-shadow: 0 0 20px rgba(156, 107, 222, 0.4);
+    }
+    .join-subtitle {
+        font-family: 'Cormorant Garamond', serif;
+        font-style: italic;
+        font-size: clamp(1.1rem, 2.4vw, 1.4rem);
+        color: var(--text-dim);
+        line-height: 1.7;
+        margin-bottom: 3rem;
+    }
+    .join-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.7rem;
+        padding: 1rem 2.6rem;
+        font-family: 'Cinzel', serif;
+        font-size: 1.05rem;
+        font-weight: 600;
+        letter-spacing: 0.06em;
+        color: #fff;
+        text-decoration: none;
+        border: 1px solid rgba(156, 107, 222, 0.5);
+        border-radius: 4px;
+        background: linear-gradient(135deg, rgba(107, 63, 160, 0.3), rgba(156, 107, 222, 0.15));
+        backdrop-filter: blur(6px);
+        transition: all 0.4s ease;
+        text-shadow: 0 0 10px rgba(179, 136, 255, 0.5);
+        box-shadow: 0 0 20px rgba(156, 107, 222, 0.15);
+    }
+    .join-btn:hover {
+        background: linear-gradient(135deg, rgba(107, 63, 160, 0.5), rgba(156, 107, 222, 0.3));
+        border-color: rgba(179, 136, 255, 0.7);
+        box-shadow: 0 0 35px rgba(156, 107, 222, 0.35);
+        transform: translateY(-2px);
+    }
+    .join-btn svg {
+        width: 22px;
+        height: 22px;
+        fill: currentColor;
+    }
+
+    /* ─── Sortie cinématographique du Hero ─── */
+    @keyframes hintOut {
+        from { opacity: 1; }
+        to   { opacity: 0; }
+    }
+    body.dismiss-hint .scroll-hint {
+        animation: hintOut 2.5s ease forwards;
+    }
+    @keyframes contentOut {
+        from { opacity: 1; transform: translateY(0); }
+        to   { opacity: 0; transform: translateY(-26px); }
+    }
+    body.dismiss-content .hero-content {
+        animation: contentOut 1.4s ease forwards;
+    }
+</style>
+</head>
+<body>
+    <canvas id="starfield"></canvas>
+
+    <!-- Brume globale réaliste (bruit fractal) -->
+    <svg class="smoke-global" preserveAspectRatio="xMidYMid slice" viewBox="0 0 800 800" xmlns="http://www.w3.org/2000/svg">
+        <filter id="smokeGlobal">
+            <feTurbulence type="fractalNoise" baseFrequency="0.010" numOctaves="5" seed="7" stitchTiles="stitch" result="noise"/>
+            <feColorMatrix in="noise" type="matrix"
+                values="0 0 0 0 0.55
+                        0 0 0 0 0.40
+                        0 0 0 0 0.85
+                        0 0 0 1.5 -0.20"/>
+        </filter>
+        <rect width="800" height="800" filter="url(#smokeGlobal)"/>
+    </svg>
+
+    <!-- Deuxième couche de brume (magenta, dérive opposée) -->
+    <svg class="smoke-global smoke-global-2" preserveAspectRatio="xMidYMid slice" viewBox="0 0 800 800" xmlns="http://www.w3.org/2000/svg">
+        <filter id="smokeGlobal2">
+            <feTurbulence type="fractalNoise" baseFrequency="0.013" numOctaves="5" seed="21" stitchTiles="stitch" result="noise"/>
+            <feColorMatrix in="noise" type="matrix"
+                values="0 0 0 0 0.80
+                        0 0 0 0 0.35
+                        0 0 0 0 0.70
+                        0 0 0 1.5 -0.15"/>
+        </filter>
+        <rect width="800" height="800" filter="url(#smokeGlobal2)"/>
+    </svg>
+
+    <!-- Nébuleuses globales (lumière commune à toutes les sections) -->
+    <div class="bg-glow">
+        <div class="nebula nebula-1"></div>
+        <div class="nebula nebula-2"></div>
+        <div class="nebula nebula-3"></div>
+    </div>
+
+    <section class="hero">
+        <div class="eyes eyes-1"><span></span><span></span></div>
+        <div class="eyes eyes-2"><span></span><span></span></div>
+        <div class="eyes eyes-3"><span></span><span></span></div>
+        <div class="eyes eyes-4"><span></span><span></span></div>
+
+        <div class="hero-content">
+            <div class="divider divider-top"></div>
+
+            <div class="title-wrap">
+                <!-- Brume dense derrière le titre -->
+                <svg class="smoke-title" preserveAspectRatio="xMidYMid slice" viewBox="0 0 600 400" xmlns="http://www.w3.org/2000/svg">
+                    <filter id="smokeTitle">
+                        <feTurbulence type="fractalNoise" baseFrequency="0.014 0.020" numOctaves="5" seed="12" stitchTiles="stitch" result="noise"/>
+                        <feColorMatrix in="noise" type="matrix"
+                            values="0 0 0 0 0.85
+                                    0 0 0 0 0.32
+                                    0 0 0 0 0.52
+                                    0 0 0 1.7 -0.25"/>
+                    </filter>
+                    <rect width="600" height="400" filter="url(#smokeTitle)"/>
+                </svg>
+
+                <h1 class="title">
+                    <span class="title-main">Trou de Verre</span>
+                    <span class="nb">N°4</span>
+                </h1>
+            </div>
+
+            <div class="divider"></div>
+            <p class="tagline">« Il y a des vérités que la lumière ne devrait pas révéler. »</p>
+        </div>
+
+        <div class="ground-fog"></div>
+
+        <div class="scroll-hint">
+            <div class="mouse"></div>
+            <span>Descendre</span>
+        </div>
+    </section>
+
+    <!-- ─── Section LORE ─── -->
+    <section class="lore">
+        <div class="lore-inner">
+            <div class="lore-divider reveal"><span>✦</span></div>
+
+            <p class="lore-text reveal">Nul ne sait pourquoi ils l'ont nommé ainsi. Ni combien il en existe.</p>
+
+            <p class="lore-text reveal">Le Trou de verre n°4 est un monde plat aux apparences trompeuses. Ses contrées varient, ses températures frappent, ses cieux s'agitent. Mais ce monde a une limite. Au bout, le ciel se fait mur.</p>
+
+            <p class="lore-text reveal">En ces terres, nulle blessure n'est abstraite… chaque coup trouve sa chair, chaque choix forge un destin. De multiples voies s'offrent à celui qui ose les chercher… aucune n'est sans conséquence.</p>
+
+            <p class="lore-text reveal">Au cœur de la civilisation, le regard se pose premièrement sur le gouffre… immense et béant, plusieurs strates de profondeur que nul n'a encore tentés de traversées. Puis il s'élève, cherchant les cieux. Mais les cieux ne sont qu'un voile… une illusion tendue au-dessus du monde. Et là où ce voile se déchire, un abîme répond en silence.</p>
+
+            <p class="lore-emphasis reveal">Le Void n'est pas une frontière.<br>Il est ce qui reste quand tout s'arrête.</p>
+
+            <div class="lore-strike reveal">
+                <p>Les deux trous brisent l'illusion.</p>
+                <p>Les deux mènent au Void.</p>
+            </div>
+
+            <p class="lore-text reveal">Certains survivent. D'autres s'élèvent. Peu atteignent ce que la plupart ne peuvent encore concevoir… et parmi ces rares élus, quelques-uns franchissent les frontières de ce monde pour fouler d'autres Trous de verre, voire des mondes qui n'existent pas encore.</p>
+
+            <div class="lore-climax">
+                <p class="climax-1 reveal">Cependant à la surface…</p>
+                <p class="climax-2 reveal">Quand la nuit tombe…</p>
+                <p class="climax-3 reveal">Elle ne tombe pas seule.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- ─── Section REJOINDRE ─── -->
+    <section class="join">
+        <div class="join-inner">
+            <div class="lore-divider reveal"><span>✦</span></div>
+            <h2 class="join-title reveal">Prêt à entrer ?</h2>
+            <p class="join-subtitle reveal">Le Trou de Verre n°4 attend ceux qui osent chercher la vérité.</p>
+            <a href="https://discord.gg/JZR6dyDDB9" target="_blank" class="join-btn reveal">
+                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M20.317 4.37a19.791 19.791 0 00-4.885-1.515.074.074 0 00-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 00-5.487 0 12.64 12.64 0 00-.617-1.25.077.077 0 00-.079-.037A19.736 19.736 0 003.677 4.37a.07.07 0 00-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 00.031.057 19.9 19.9 0 005.993 3.03.078.078 0 00.084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 00-.041-.106 13.107 13.107 0 01-1.872-.892.077.077 0 01-.008-.128 10.2 10.2 0 00.372-.292.074.074 0 01.077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 01.078.01c.12.098.246.198.373.292a.077.077 0 01-.006.127 12.299 12.299 0 01-1.873.892.077.077 0 00-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 00.084.028 19.839 19.839 0 006.002-3.03.077.077 0 00.032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 00-.031-.03z"/></svg>
+                Rejoindre le Discord
+            </a>
+        </div>
+    </section>
+
+    <div class="vignette"></div>
+    <div class="grain"></div>
+
+    <script>
+        const canvas = document.getElementById('starfield');
+        const ctx = canvas.getContext('2d');
+        let stars = [];
+
+        function resize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            createStars();
+        }
+
+        function createStars() {
+            stars = [];
+            const count = Math.floor((canvas.width * canvas.height) / 6000);
+            for (let i = 0; i < count; i++) {
+                stars.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    r: Math.random() * 1.3 + 0.2,
+                    baseAlpha: Math.random() * 0.5 + 0.2,
+                    speed: Math.random() * 0.02 + 0.005,
+                    phase: Math.random() * Math.PI * 2,
+                    drift: Math.random() * 0.08 + 0.02
+                });
+            }
+        }
+
+        function animate(time) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            for (const s of stars) {
+                const twinkle = s.baseAlpha + Math.sin(time * s.speed + s.phase) * 0.25;
+                ctx.beginPath();
+                ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(236, 228, 255, ${Math.max(0, twinkle)})`;
+                ctx.fill();
+                s.y -= s.drift;
+                if (s.y < 0) s.y = canvas.height;
+            }
+            requestAnimationFrame(animate);
+        }
+
+        window.addEventListener('resize', resize);
+        resize();
+        requestAnimationFrame(animate);
+
+        // ─── Apparition des éléments au défilement (se rejoue à chaque passage) ───
+        const revealEls = document.querySelectorAll('.reveal');
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                } else {
+                    entry.target.classList.remove('visible');
+                }
+            });
+        }, { threshold: 0.2 });
+        revealEls.forEach(el => observer.observe(el));
+
+        // ─── Sortie cinématographique du Hero ───
+        const html = document.documentElement;
+        const heroContent = document.querySelector('.hero-content');
+        const scrollHint = document.querySelector('.scroll-hint');
+        const lore = document.querySelector('.lore');
+        let dismissed = false, dismissing = false;
+
+        // On bloque le scroll au départ : le Hero occupe tout l'écran
+        html.classList.add('locked');
+
+        function startDismiss() {
+            if (dismissed || dismissing) return;
+            dismissing = true;
+            // 1. La molette "Descendre" s'évapore (2,5s)
+            document.body.classList.add('dismiss-hint');
+            // 2. Puis le reste du Hero disparaît (comme il est apparu)
+            setTimeout(() => document.body.classList.add('dismiss-content'), 2500);
+            // 3. Une fois dissipé : on débloque le scroll et on descend vers le lore
+            setTimeout(() => {
+                dismissed = true;
+                dismissing = false;
+                scrollHint.style.animation = 'none';
+                scrollHint.style.opacity = '0';
+                heroContent.style.opacity = '0';
+                heroContent.style.transform = 'translateY(-26px)';
+                document.body.classList.remove('dismiss-hint', 'dismiss-content');
+                html.classList.remove('locked');
+                window.addEventListener('scroll', onScroll, { passive: true });
+            }, 2500 + 1400);
+        }
+
+        // Après la sortie : le Hero réapparaît/disparaît selon le défilement
+        let wasScrolledDown = false;
+
+        function onScroll() {
+            if (!dismissed) return;
+            const h = window.innerHeight;
+            const y = window.scrollY;
+
+            // On attend que l'utilisateur ait scrollé dans le lore
+            if (y > h * 0.5) wasScrolledDown = true;
+
+            // Le Hero réapparaît/disparaît seulement quand on revient du lore
+            if (wasScrolledDown) {
+                const p = Math.min(y / (h * 0.7), 1);
+                heroContent.style.opacity = String(1 - p);
+                heroContent.style.transform = `translateY(${-26 * p}px)`;
+                scrollHint.style.opacity = String(Math.max(0, 1 - y / (h * 0.15)));
+            }
+
+            // Re-verrouiller quand on revient en haut (après avoir été dans le lore)
+            if (wasScrolledDown && y <= 2) {
+                dismissed = false;
+                wasScrolledDown = false;
+                heroContent.style.opacity = '';
+                heroContent.style.transform = '';
+                scrollHint.style.animation = '';
+                scrollHint.style.opacity = '';
+                html.classList.add('locked');
+                window.removeEventListener('scroll', onScroll);
+                window.scrollTo(0, 0);
+            }
+        }
+
+        // Détection de l'envie de descendre (tant que le scroll est bloqué)
+        window.addEventListener('wheel', (e) => {
+            if (!dismissed && !dismissing && e.deltaY > 0) startDismiss();
+        }, { passive: true });
+
+        window.addEventListener('keydown', (e) => {
+            if (dismissed || dismissing) return;
+            if (['ArrowDown', 'PageDown', 'End', ' ', 'Spacebar'].includes(e.key)) startDismiss();
+        });
+
+        let touchStartY = null;
+        window.addEventListener('touchstart', (e) => { touchStartY = e.touches[0].clientY; }, { passive: true });
+        window.addEventListener('touchmove', (e) => {
+            if (dismissed || dismissing || touchStartY === null) return;
+            if (touchStartY - e.touches[0].clientY > 12) startDismiss();
+        }, { passive: true });
+    </script>
+</body>
+</html>
