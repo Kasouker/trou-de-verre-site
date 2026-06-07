@@ -601,6 +601,27 @@
         fill: currentColor;
     }
 
+    /* ─── FOOTER ─── */
+    .footer {
+        position: relative;
+        z-index: 2;
+        padding: 3rem 2rem 2.5rem;
+        text-align: center;
+        border-top: 1px solid rgba(156, 107, 222, 0.15);
+    }
+    .footer-name {
+        font-family: 'Metamorphous', cursive;
+        font-size: 1.1rem;
+        color: var(--text-dim);
+        letter-spacing: 0.06em;
+        margin-bottom: 0.6rem;
+    }
+    .footer-copy {
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 0.95rem;
+        color: rgba(154, 139, 181, 0.5);
+    }
+
     /* ─── Sortie cinématographique du Hero ─── */
     @keyframes hintOut {
         from { opacity: 1; }
@@ -770,6 +791,12 @@
         </div>
     </section>
 
+    <!-- ─── FOOTER ─── -->
+    <footer class="footer reveal">
+        <p class="footer-name">Trou de Verre N°4</p>
+        <p class="footer-copy">© 2026 — Kasouker & Nokks</p>
+    </footer>
+
     <div class="vignette"></div>
     <div class="grain"></div>
 
@@ -917,14 +944,14 @@
         skinScript.src = 'https://cdn.jsdelivr.net/npm/skinview3d@3.0.1/bundles/skinview3d.bundle.min.js';
         skinScript.onload = () => {
             initSkin('skin-kasouker', 'Kasouker');
-            initSkin('skin-Magnuto79', 'Nokks');
+            initSkin('skin-nokks', 'Magnuto79');
         };
         skinScript.onerror = () => {
             // Si skinview3d ne charge pas, on utilise des images 3D statiques
             document.getElementById('skin-kasouker').outerHTML =
                 '<img src="https://starlightskins.lunareclipse.studio/render/walking/Kasouker/full" class="team-skin-img" alt="Kasouker">';
             document.getElementById('skin-nokks').outerHTML =
-                '<img src="https://starlightskins.lunareclipse.studio/render/walking/Nokks/full" class="team-skin-img" alt="Nokks">';
+                '<img src="https://starlightskins.lunareclipse.studio/render/walking/Magnuto79/full" class="team-skin-img" alt="Nokks">';
         };
         document.head.appendChild(skinScript);
 
