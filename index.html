@@ -3,6 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Trou de Verre N°4 — Un monde plat aux apparences trompeuses. Survivrez-vous ?">
+<meta name="theme-color" content="#040308">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='11' cy='16' r='3.5' fill='%238b1a2b'/%3E%3Ccircle cx='21' cy='16' r='3.5' fill='%238b1a2b'/%3E%3C/svg%3E">
 <title>Trou de Verre N°4</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -38,6 +41,51 @@
         inset: 0;
         z-index: 0;
         display: block;
+    }
+
+    /* ─── Barre de navigation ─── */
+    .navbar {
+        position: fixed;
+        top: 0; left: 0; right: 0;
+        z-index: 10;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.9rem 2.5rem;
+        background: rgba(4, 3, 8, 0.65);
+        backdrop-filter: blur(10px);
+        border-bottom: 1px solid rgba(156, 107, 222, 0.12);
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.8s ease;
+    }
+    .navbar.visible {
+        opacity: 1;
+        pointer-events: auto;
+    }
+    .nav-logo {
+        font-family: 'Metamorphous', cursive;
+        font-size: 1.05rem;
+        color: var(--text-pale);
+        text-decoration: none;
+        letter-spacing: 0.04em;
+        text-shadow: 0 0 12px rgba(156, 107, 222, 0.35);
+    }
+    .nav-links {
+        display: flex;
+        gap: 2rem;
+    }
+    .nav-links a {
+        font-family: 'Cinzel', serif;
+        font-size: 0.75rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--text-dim);
+        text-decoration: none;
+        transition: color 0.3s;
+    }
+    .nav-links a:hover {
+        color: var(--eerie-glow);
     }
 
     /* ─── Brume globale (tout l'écran) ─── */
@@ -487,56 +535,70 @@
     .team-grid {
         display: flex;
         justify-content: center;
-        gap: 3rem;
+        gap: 1.5rem;
         flex-wrap: wrap;
     }
     .team-card {
-        display: flex;
-        align-items: center;
-        gap: 1.8rem;
+        width: 190px;
+        overflow: hidden;
+        max-height: 52px;
         background: rgba(15, 8, 35, 0.55);
         border: 1px solid rgba(156, 107, 222, 0.2);
         border-radius: 8px;
-        padding: 1.5rem 2.2rem;
         backdrop-filter: blur(6px);
-        transition: all 0.4s ease;
+        transition: max-height 0.5s ease, border-color 0.4s, box-shadow 0.4s;
+        cursor: pointer;
     }
     .team-card:hover {
+        max-height: 420px;
         border-color: rgba(179, 136, 255, 0.5);
         box-shadow: 0 0 30px rgba(156, 107, 222, 0.2);
-        transform: translateY(-3px);
-    }
-    .team-skin {
-        width: 140px;
-        height: 240px;
-        border-radius: 4px;
-    }
-    .team-skin-img {
-        width: 140px;
-        height: 240px;
-        object-fit: contain;
-    }
-    .team-info {
-        text-align: left;
     }
     .team-name {
         font-family: 'Cinzel', serif;
-        font-size: 1.5rem;
+        font-size: 1rem;
         font-weight: 700;
         color: var(--text-pale);
-        margin-bottom: 0.3rem;
+        text-align: center;
+        padding: 0.85rem 1rem;
         text-shadow: 0 0 12px rgba(156, 107, 222, 0.3);
+    }
+    .team-details {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 0 1rem 1.2rem;
+        opacity: 0;
+        transition: opacity 0.4s ease 0.15s;
+    }
+    .team-card:hover .team-details {
+        opacity: 1;
+    }
+    .team-skin {
+        width: 120px;
+        height: 200px;
+        border-radius: 4px;
+        margin-bottom: 0.8rem;
+    }
+    .team-skin-img {
+        width: 120px;
+        height: 200px;
+        object-fit: contain;
+        margin-bottom: 0.8rem;
+    }
+    .team-info {
+        text-align: center;
     }
     .team-role {
         font-family: 'Cormorant Garamond', serif;
         font-style: italic;
-        font-size: 1.15rem;
+        font-size: 1.05rem;
         color: var(--nebula-purple);
-        margin-bottom: 0.8rem;
+        margin-bottom: 0.5rem;
     }
     .team-phrase {
         font-family: 'Cormorant Garamond', serif;
-        font-size: 1.05rem;
+        font-size: 0.95rem;
         color: var(--text-dim);
         font-style: italic;
     }
@@ -640,6 +702,16 @@
 </style>
 </head>
 <body>
+    <!-- Barre de navigation (apparaît après le Hero) -->
+    <nav class="navbar" id="navbar">
+        <a href="#" class="nav-logo" onclick="window.scrollTo({top:0,behavior:'smooth'});return false;">TdV N°4</a>
+        <div class="nav-links">
+            <a href="#lore">Lore</a>
+            <a href="#join">Rejoindre</a>
+            <a href="#team">Équipe</a>
+        </div>
+    </nav>
+
     <canvas id="starfield"></canvas>
 
     <!-- Brume globale réaliste (bruit fractal) -->
@@ -721,7 +793,7 @@
     </section>
 
     <!-- ─── Section LORE ─── -->
-    <section class="lore">
+    <section class="lore" id="lore">
         <div class="lore-inner">
             <div class="lore-divider reveal"><span>✦</span></div>
 
@@ -751,7 +823,7 @@
     </section>
 
     <!-- ─── Section REJOINDRE ─── -->
-    <section class="join">
+    <section class="join" id="join">
         <div class="join-inner">
             <div class="lore-divider reveal"><span>✦</span></div>
             <h2 class="join-title reveal">Prêt à entrer ?</h2>
@@ -764,27 +836,53 @@
     </section>
 
     <!-- ─── Section ÉQUIPE ─── -->
-    <section class="team">
+    <section class="team" id="team">
         <div class="team-inner">
             <div class="lore-divider reveal"><span>✦</span></div>
             <h2 class="team-title reveal">Les Fondateurs</h2>
 
             <div class="team-grid">
                 <div class="team-card reveal">
-                    <canvas id="skin-kasouker" class="team-skin"></canvas>
-                    <div class="team-info">
-                        <h3 class="team-name">Kasouker</h3>
-                        <p class="team-role">Fondateur</p>
-                        <p class="team-phrase">—</p>
+                    <h3 class="team-name">Kasouker</h3>
+                    <div class="team-details">
+                        <canvas id="skin-kasouker" class="team-skin"></canvas>
+                        <div class="team-info">
+                            <p class="team-role">Fondateur</p>
+                            <p class="team-phrase">—</p>
+                        </div>
                     </div>
                 </div>
 
                 <div class="team-card reveal">
-                    <canvas id="skin-nokks" class="team-skin"></canvas>
-                    <div class="team-info">
-                        <h3 class="team-name">Nokks</h3>
-                        <p class="team-role">Fondateur</p>
-                        <p class="team-phrase">—</p>
+                    <h3 class="team-name">Nokks</h3>
+                    <div class="team-details">
+                        <canvas id="skin-nokks" class="team-skin"></canvas>
+                        <div class="team-info">
+                            <p class="team-role">Fondateur</p>
+                            <p class="team-phrase">—</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="team-card reveal">
+                    <h3 class="team-name">_JDL__</h3>
+                    <div class="team-details">
+                        <canvas id="skin-jdl" class="team-skin"></canvas>
+                        <div class="team-info">
+                            <p class="team-role">Modérateur</p>
+                            <p class="team-phrase">—</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="team-card reveal">
+                    <h3 class="team-name">BBK</h3>
+                    <div class="team-details">
+                        <canvas id="skin-bbk" class="team-skin"></canvas>
+                        <div class="team-info">
+                            <p class="team-role">Modérateur</p>
+                            <p class="team-phrase">—</p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -885,6 +983,7 @@
                 heroContent.style.transform = 'translateY(-26px)';
                 document.body.classList.remove('dismiss-hint', 'dismiss-content');
                 html.classList.remove('locked');
+                document.getElementById('navbar').classList.add('visible');
                 window.addEventListener('scroll', onScroll, { passive: true });
             }, 1400);
         }
@@ -917,6 +1016,7 @@
                 scrollHint.style.animation = '';
                 scrollHint.style.opacity = '';
                 html.classList.add('locked');
+                document.getElementById('navbar').classList.remove('visible');
                 window.removeEventListener('scroll', onScroll);
                 window.scrollTo(0, 0);
             }
@@ -945,6 +1045,8 @@
         skinScript.onload = () => {
             initSkin('skin-kasouker', 'Kasouker');
             initSkin('skin-nokks', 'Magnuto79');
+            initSkin('skin-jdl', '_JDL__');
+            initSkin('skin-bbk', 'BBK');
         };
         skinScript.onerror = () => {
             // Si skinview3d ne charge pas, on utilise des images 3D statiques
@@ -952,6 +1054,10 @@
                 '<img src="https://starlightskins.lunareclipse.studio/render/walking/Kasouker/full" class="team-skin-img" alt="Kasouker">';
             document.getElementById('skin-nokks').outerHTML =
                 '<img src="https://starlightskins.lunareclipse.studio/render/walking/Magnuto79/full" class="team-skin-img" alt="Nokks">';
+            document.getElementById('skin-jdl').outerHTML =
+                '<img src="https://starlightskins.lunareclipse.studio/render/walking/_JDL__/full" class="team-skin-img" alt="_JDL__">';
+            document.getElementById('skin-bbk').outerHTML =
+                '<img src="https://starlightskins.lunareclipse.studio/render/walking/BBK/full" class="team-skin-img" alt="BBK">';
         };
         document.head.appendChild(skinScript);
 
