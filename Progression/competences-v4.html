@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TdVN4 — Compétences</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:100%;height:100%;overflow:hidden}
+body{background:#060610;font-family:Georgia,'Times New Roman',serif;color:#9090b8}
+#stars{position:fixed;inset:0;pointer-events:none;z-index:0}
+#vglow{position:fixed;inset:0;pointer-events:none;z-index:1;transition:background 0.8s ease}
+#toggle{position:fixed;left:0;top:0;bottom:0;width:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;border-right:1px solid #0d0d22;background:rgba(4,4,12,.88);z-index:300;transition:background .2s}
+#toggle:hover{background:rgba(7,7,18,.96)}
+#arrow{font-size:16px;color:#1c1c40;transition:transform .32s cubic-bezier(.4,0,.2,1),color .2s}
+#toggle:hover #arrow{color:#4040b0}
+#toggle.open #arrow{transform:rotate(180deg);color:#4040c0}
+#panel{position:fixed;left:36px;top:0;bottom:0;width:230px;background:rgba(3,3,11,.97);border-right:1px solid #0b0b1e;transform:translateX(-230px);transition:transform .32s cubic-bezier(.4,0,.2,1);z-index:200;overflow-y:auto;padding:15px 9px}
+#panel.open{transform:translateX(0)}
+.p-title{font-size:.42em;letter-spacing:4px;color:#0e0e28;text-transform:uppercase;text-align:center;margin-bottom:12px}
+.c-item{padding:7px 9px;margin-bottom:3px;cursor:pointer;border:1px solid transparent;border-radius:3px;font-size:.56em;letter-spacing:1.5px;text-transform:uppercase;color:#17173a;transition:all .15s}
+.c-item:hover{color:var(--cc);border-color:var(--cc-d)}
+.c-item.active{color:var(--cc);border-color:var(--cc);background:var(--cc-b)}
+.c-sep{height:1px;background:#0a0a1e;margin:7px 3px}
+.w-list{padding-left:10px;overflow:hidden;max-height:0;transition:max-height .25s ease}
+.w-list.open{max-height:130px}
+.w-item{padding:4px 7px;margin-bottom:2px;cursor:pointer;font-size:.52em;letter-spacing:1.5px;text-transform:uppercase;color:#131330;transition:color .15s}
+.w-item:hover,.w-item.active{color:var(--cc)}
+#main{position:fixed;left:36px;top:0;right:0;bottom:0;display:flex;flex-direction:column;z-index:10}
+#topbar{height:54px;flex-shrink:0;display:flex;align-items:center;padding:0 18px;gap:11px;border-bottom:1px solid #0b0b1e;background:rgba(3,3,10,.6)}
+#wicons{display:flex;gap:6px;align-items:center}
+.wicon{width:36px;height:36px;border-radius:50%;border:1px solid #0f0f25;cursor:pointer;display:flex;align-items:center;justify-content:center;background:rgba(3,3,13,.6);transition:all .2s}
+.wicon:hover{border-color:var(--cc-d)}
+.wicon.active{border-color:var(--cc);background:var(--cc-b);box-shadow:0 0 9px var(--cc-b)}
+#wname{margin-left:9px;font-size:.88em;letter-spacing:6px;text-transform:uppercase;color:var(--cc);text-shadow:0 0 15px var(--cc-d);transition:all .25s}
+#tc{flex:1;overflow:hidden;position:relative;cursor:grab}
+#tc:active{cursor:grabbing}
+#tsvg-wrap{position:absolute;top:0;left:0;transform-origin:0 0}
+#tt{position:fixed;pointer-events:none;background:rgba(3,3,13,.97);border-left:2px solid var(--cc);padding:10px 13px;max-width:235px;z-index:500;opacity:0;transition:opacity .13s}
+#tt.vis{opacity:1}
+#tt-type{font-size:.44em;letter-spacing:2.5px;color:#0d0d2c;text-transform:uppercase;margin-bottom:4px}
+#tt-name{font-size:.67em;letter-spacing:2px;color:var(--cc);text-transform:uppercase;margin-bottom:6px}
+#tt-sep{height:1px;background:var(--cc-d);margin-bottom:6px}
+#tt-lvl{font-size:.52em;letter-spacing:1.5px;color:var(--cc);opacity:.65;margin-bottom:6px;display:none}
+#tt-desc{font-size:.6em;color:#303050;line-height:1.75}
+#zc{position:fixed;bottom:14px;right:14px;display:flex;flex-direction:column;gap:3px;z-index:100}
+.zbtn{width:27px;height:27px;background:rgba(3,3,13,.9);border:1px solid #0d0d24;color:#171740;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;border-radius:3px;transition:all .14s}
+.zbtn:hover{color:#5050cc;border-color:#2020a0}
+</style>
+</head>
+<body>
+<canvas id="stars"></canvas>
+<div id="vglow"></div>
+<div id="toggle" onclick="togglePanel()"><span id="arrow">›</span></div>
+<div id="panel"><div class="p-title">Spécialités</div><div id="clist"></div></div>
+<div id="main">
+  <div id="topbar"><div id="wicons"></div><div id="wname"></div></div>
+  <div id="tc"><div id="tsvg-wrap">
+    <svg id="tsvg" viewBox="0 0 840 500" xmlns="http://www.w3.org/2000/svg" width="840" height="500"></svg>
+  </div></div>
+</div>
+<div id="tt"><div id="tt-type"></div><div id="tt-name"></div><div id="tt-lvl"></div><div id="tt-sep"></div><div id="tt-desc"></div></div>
+<div id="zc"><button class="zbtn" onclick="doZoom(1.17)">+</button><button class="zbtn" onclick="doZoom(0.85)">−</button></div>
+<script>
+/* ── ÉTOILES ── */
+(()=>{const cv=document.getElementById('stars'),ctx=cv.getContext('2d');let st=[];
+function init(){cv.width=innerWidth;cv.height=innerHeight;st=Array.from({length:220},()=>({x:Math.random(),y:Math.random(),r:Math.random()*1.1+.15,a:Math.random(),sp:(Math.random()*.007+.002)*(Math.random()>.5?1:-1)}))}
+function draw(){ctx.clearRect(0,0,cv.width,cv.height);st.forEach(s=>{s.a+=s.sp;if(s.a>1){s.a=1;s.sp=-Math.abs(s.sp)}if(s.a<.08){s.a=.08;s.sp=Math.abs(s.sp)}ctx.beginPath();ctx.arc(s.x*cv.width,s.y*cv.height,s.r,0,Math.PI*2);ctx.fillStyle=`rgba(210,205,255,${s.a*.62})`;ctx.fill()});requestAnimationFrame(draw)}
+init();draw();window.addEventListener('resize',init)})();
+
+/* ── 8 TEMPLATES UNIQUES (un par classe) ──
+   Chaque template: sA(15 nœuds section gauche), eA(arêtes A),
+                    sB(15 nœuds section droite), eB(arêtes B)
+   t:"key"=nœud clé (grand cercle+anneau) / t:"std"=nœud standard
+   _t = template actif lors de la construction d'une classe */
+let _t=null;
+const W=(nm,sy,lA,lB,ct,tmpl)=>buildW(nm,sy,lA,lB,ct,tmpl||_t);
+
+// ─ PRÉDATEUR : sablier (top-key → 2 branches → fusion → triple → bas-key) ─
+const T_pred={
+  sA:[{id:"a1",x:190,y:38,t:"key"},{id:"a2",x:90,y:108,t:"std"},{id:"a3",x:290,y:108,t:"std"},
+      {id:"a4",x:90,y:178,t:"std"},{id:"a5",x:290,y:178,t:"std"},{id:"a6",x:190,y:250,t:"key"},
+      {id:"a7",x:90,y:320,t:"std"},{id:"a8",x:190,y:320,t:"std"},{id:"a9",x:290,y:320,t:"std"},
+      {id:"a10",x:90,y:390,t:"std"},{id:"a11",x:190,y:390,t:"std"},{id:"a12",x:290,y:390,t:"std"},
+      {id:"a13",x:90,y:458,t:"std"},{id:"a14",x:190,y:458,t:"key"},{id:"a15",x:290,y:458,t:"std"}],
+  eA:[["a1","a2"],["a1","a3"],["a2","a4"],["a3","a5"],["a4","a6"],["a5","a6"],["a6","a7"],["a6","a8"],["a6","a9"],
+      ["a7","a10"],["a8","a11"],["a9","a12"],["a10","a13"],["a11","a14"],["a12","a15"],["a13","a14"],["a15","a14"]],
+  sB:[{id:"b1",x:535,y:38,t:"std"},{id:"b2",x:765,y:38,t:"std"},{id:"b3",x:535,y:112,t:"std"},
+      {id:"b4",x:765,y:112,t:"std"},{id:"b5",x:535,y:185,t:"std"},{id:"b6",x:765,y:185,t:"std"},
+      {id:"b7",x:598,y:258,t:"key"},{id:"b8",x:765,y:258,t:"std"},{id:"b9",x:535,y:330,t:"std"},
+      {id:"b10",x:652,y:330,t:"std"},{id:"b11",x:765,y:330,t:"std"},{id:"b12",x:535,y:402,t:"std"},
+      {id:"b13",x:652,y:402,t:"std"},{id:"b14",x:765,y:402,t:"std"},{id:"b15",x:650,y:462,t:"key"}],
+  eB:[["b1","b3"],["b2","b4"],["b3","b5"],["b4","b6"],["b5","b7"],["b6","b7"],["b6","b8"],
+      ["b7","b9"],["b7","b10"],["b8","b11"],["b9","b12"],["b10","b13"],["b11","b14"],
+      ["b12","b15"],["b13","b15"],["b14","b15"]]};
+
+// ─ OMBRE : croix/diamant (2 chaînes se croisent en un key central) ─
+const T_ombr={
+  sA:[{id:"a1",x:90,y:38,t:"std"},{id:"a2",x:290,y:38,t:"std"},{id:"a3",x:130,y:112,t:"std"},
+      {id:"a4",x:250,y:112,t:"std"},{id:"a5",x:190,y:183,t:"key"},{id:"a6",x:130,y:256,t:"std"},
+      {id:"a7",x:250,y:256,t:"std"},{id:"a8",x:90,y:328,t:"std"},{id:"a9",x:290,y:328,t:"std"},
+      {id:"a10",x:90,y:400,t:"std"},{id:"a11",x:190,y:400,t:"std"},{id:"a12",x:290,y:400,t:"std"},
+      {id:"a13",x:90,y:462,t:"std"},{id:"a14",x:190,y:462,t:"key"},{id:"a15",x:290,y:462,t:"std"}],
+  eA:[["a1","a3"],["a2","a4"],["a3","a5"],["a4","a5"],["a5","a6"],["a5","a7"],["a6","a8"],["a7","a9"],
+      ["a8","a10"],["a8","a11"],["a9","a11"],["a9","a12"],["a10","a13"],["a11","a14"],
+      ["a12","a15"],["a13","a14"],["a15","a14"]],
+  sB:[{id:"b1",x:535,y:38,t:"std"},{id:"b2",x:650,y:38,t:"std"},{id:"b3",x:765,y:38,t:"std"},
+      {id:"b4",x:535,y:120,t:"std"},{id:"b5",x:765,y:120,t:"std"},{id:"b6",x:650,y:198,t:"key"},
+      {id:"b7",x:650,y:268,t:"std"},{id:"b8",x:535,y:340,t:"std"},{id:"b9",x:765,y:340,t:"std"},
+      {id:"b10",x:535,y:408,t:"std"},{id:"b11",x:650,y:408,t:"std"},{id:"b12",x:765,y:408,t:"std"},
+      {id:"b13",x:535,y:462,t:"std"},{id:"b14",x:650,y:462,t:"key"},{id:"b15",x:765,y:462,t:"std"}],
+  eB:[["b1","b4"],["b2","b6"],["b3","b5"],["b4","b6"],["b5","b6"],["b6","b7"],["b7","b8"],["b7","b9"],
+      ["b8","b10"],["b9","b12"],["b8","b11"],["b9","b11"],["b10","b13"],["b11","b14"],
+      ["b12","b15"],["b13","b14"],["b15","b14"]]};
+
+// ─ REMPART : forteresse (key central + base très large) ─
+const T_remt={
+  sA:[{id:"a1",x:190,y:38,t:"key"},{id:"a2",x:90,y:112,t:"std"},{id:"a3",x:290,y:112,t:"std"},
+      {id:"a4",x:90,y:185,t:"std"},{id:"a5",x:190,y:185,t:"key"},{id:"a6",x:290,y:185,t:"std"},
+      {id:"a7",x:90,y:258,t:"std"},{id:"a8",x:290,y:258,t:"std"},{id:"a9",x:90,y:330,t:"std"},
+      {id:"a10",x:190,y:330,t:"std"},{id:"a11",x:290,y:330,t:"std"},{id:"a12",x:90,y:402,t:"key"},
+      {id:"a13",x:190,y:402,t:"std"},{id:"a14",x:290,y:402,t:"key"},{id:"a15",x:190,y:462,t:"std"}],
+  eA:[["a1","a2"],["a1","a3"],["a2","a4"],["a2","a5"],["a3","a5"],["a3","a6"],["a5","a7"],["a5","a8"],
+      ["a4","a7"],["a6","a8"],["a7","a9"],["a8","a11"],["a7","a10"],["a8","a10"],
+      ["a9","a12"],["a10","a13"],["a10","a14"],["a11","a14"],["a12","a15"],["a13","a15"],["a14","a15"]],
+  sB:[{id:"b1",x:650,y:38,t:"key"},{id:"b2",x:535,y:112,t:"std"},{id:"b3",x:650,y:112,t:"std"},
+      {id:"b4",x:765,y:112,t:"std"},{id:"b5",x:535,y:185,t:"std"},{id:"b6",x:765,y:185,t:"std"},
+      {id:"b7",x:535,y:258,t:"std"},{id:"b8",x:650,y:258,t:"key"},{id:"b9",x:765,y:258,t:"std"},
+      {id:"b10",x:535,y:330,t:"std"},{id:"b11",x:765,y:330,t:"std"},{id:"b12",x:535,y:402,t:"std"},
+      {id:"b13",x:650,y:402,t:"std"},{id:"b14",x:765,y:402,t:"std"},{id:"b15",x:650,y:462,t:"key"}],
+  eB:[["b1","b2"],["b1","b3"],["b1","b4"],["b2","b5"],["b4","b6"],["b3","b7"],["b5","b7"],["b6","b8"],
+      ["b7","b8"],["b8","b9"],["b8","b10"],["b9","b12"],["b8","b11"],["b11","b14"],["b10","b13"],
+      ["b12","b15"],["b13","b15"],["b14","b15"]]};
+
+// ─ PRÉCISION : deux chaînes linéaires parallèles, peu de connexions croisées ─
+const T_prec={
+  sA:[{id:"a1",x:90,y:38,t:"std"},{id:"a2",x:290,y:38,t:"std"},{id:"a3",x:90,y:112,t:"std"},
+      {id:"a4",x:290,y:112,t:"std"},{id:"a5",x:90,y:185,t:"std"},{id:"a6",x:290,y:185,t:"std"},
+      {id:"a7",x:90,y:258,t:"key"},{id:"a8",x:290,y:258,t:"std"},{id:"a9",x:90,y:330,t:"std"},
+      {id:"a10",x:190,y:330,t:"std"},{id:"a11",x:290,y:330,t:"std"},{id:"a12",x:90,y:402,t:"std"},
+      {id:"a13",x:290,y:402,t:"std"},{id:"a14",x:90,y:462,t:"std"},{id:"a15",x:190,y:462,t:"key"}],
+  eA:[["a1","a3"],["a2","a4"],["a3","a5"],["a4","a6"],["a5","a7"],["a6","a8"],
+      ["a7","a9"],["a7","a10"],["a8","a11"],["a9","a12"],["a10","a15"],["a11","a13"],
+      ["a12","a14"],["a13","a15"],["a14","a15"]],
+  sB:[{id:"b1",x:535,y:38,t:"std"},{id:"b2",x:765,y:38,t:"std"},{id:"b3",x:535,y:112,t:"std"},
+      {id:"b4",x:765,y:112,t:"std"},{id:"b5",x:535,y:185,t:"std"},{id:"b6",x:765,y:185,t:"std"},
+      {id:"b7",x:535,y:258,t:"std"},{id:"b8",x:765,y:258,t:"key"},{id:"b9",x:535,y:330,t:"std"},
+      {id:"b10",x:650,y:330,t:"std"},{id:"b11",x:765,y:330,t:"std"},{id:"b12",x:535,y:402,t:"std"},
+      {id:"b13",x:765,y:402,t:"std"},{id:"b14",x:650,y:462,t:"key"},{id:"b15",x:765,y:462,t:"std"}],
+  eB:[["b1","b3"],["b2","b4"],["b3","b5"],["b4","b6"],["b5","b7"],["b6","b8"],
+      ["b7","b9"],["b7","b10"],["b8","b11"],["b9","b12"],["b10","b14"],["b11","b13"],
+      ["b12","b14"],["b13","b15"],["b13","b14"]]};
+
+// ─ INSTINCT : arbre organique (tronc unique, branches asymétriques) ─
+const T_inst={
+  sA:[{id:"a1",x:190,y:38,t:"key"},{id:"a2",x:130,y:112,t:"std"},{id:"a3",x:250,y:112,t:"std"},
+      {id:"a4",x:90,y:185,t:"std"},{id:"a5",x:190,y:185,t:"std"},{id:"a6",x:290,y:185,t:"std"},
+      {id:"a7",x:90,y:258,t:"std"},{id:"a8",x:290,y:258,t:"std"},{id:"a9",x:130,y:330,t:"key"},
+      {id:"a10",x:250,y:330,t:"std"},{id:"a11",x:90,y:402,t:"std"},{id:"a12",x:190,y:402,t:"std"},
+      {id:"a13",x:290,y:402,t:"std"},{id:"a14",x:90,y:462,t:"std"},{id:"a15",x:190,y:462,t:"key"}],
+  eA:[["a1","a2"],["a1","a3"],["a2","a4"],["a2","a5"],["a3","a5"],["a3","a6"],["a4","a7"],["a6","a8"],
+      ["a7","a9"],["a5","a9"],["a8","a10"],["a9","a11"],["a9","a12"],["a10","a13"],
+      ["a11","a14"],["a12","a15"],["a13","a15"],["a14","a15"]],
+  sB:[{id:"b1",x:650,y:38,t:"key"},{id:"b2",x:535,y:112,t:"std"},{id:"b3",x:765,y:112,t:"std"},
+      {id:"b4",x:535,y:185,t:"std"},{id:"b5",x:650,y:185,t:"std"},{id:"b6",x:765,y:185,t:"std"},
+      {id:"b7",x:535,y:258,t:"std"},{id:"b8",x:650,y:258,t:"std"},{id:"b9",x:765,y:258,t:"std"},
+      {id:"b10",x:535,y:330,t:"std"},{id:"b11",x:765,y:330,t:"std"},{id:"b12",x:535,y:402,t:"std"},
+      {id:"b13",x:650,y:402,t:"std"},{id:"b14",x:765,y:402,t:"std"},{id:"b15",x:650,y:462,t:"key"}],
+  eB:[["b1","b2"],["b1","b3"],["b2","b4"],["b2","b5"],["b3","b5"],["b3","b6"],["b4","b7"],["b5","b8"],
+      ["b6","b9"],["b7","b10"],["b9","b11"],["b10","b12"],["b8","b13"],["b11","b14"],
+      ["b12","b15"],["b13","b15"],["b14","b15"]]};
+
+// ─ ARCANE : grille dense (beaucoup de connexions croisées, magie) ─
+const T_arca={
+  sA:[{id:"a1",x:90,y:38,t:"std"},{id:"a2",x:190,y:38,t:"std"},{id:"a3",x:290,y:38,t:"std"},
+      {id:"a4",x:90,y:110,t:"std"},{id:"a5",x:190,y:110,t:"std"},{id:"a6",x:290,y:110,t:"std"},
+      {id:"a7",x:190,y:183,t:"key"},{id:"a8",x:90,y:258,t:"std"},{id:"a9",x:190,y:258,t:"std"},
+      {id:"a10",x:290,y:258,t:"std"},{id:"a11",x:90,y:330,t:"std"},{id:"a12",x:290,y:330,t:"std"},
+      {id:"a13",x:90,y:402,t:"std"},{id:"a14",x:190,y:402,t:"std"},{id:"a15",x:190,y:462,t:"key"}],
+  eA:[["a1","a4"],["a1","a5"],["a2","a4"],["a2","a5"],["a2","a6"],["a3","a5"],["a3","a6"],
+      ["a4","a7"],["a5","a7"],["a6","a7"],["a7","a8"],["a7","a9"],["a7","a10"],
+      ["a8","a11"],["a9","a11"],["a10","a12"],["a9","a12"],["a11","a13"],["a11","a14"],
+      ["a12","a14"],["a13","a15"],["a14","a15"]],
+  sB:[{id:"b1",x:535,y:38,t:"std"},{id:"b2",x:650,y:38,t:"key"},{id:"b3",x:765,y:38,t:"std"},
+      {id:"b4",x:535,y:120,t:"std"},{id:"b5",x:765,y:120,t:"std"},{id:"b6",x:590,y:198,t:"std"},
+      {id:"b7",x:710,y:198,t:"std"},{id:"b8",x:650,y:268,t:"key"},{id:"b9",x:535,y:340,t:"std"},
+      {id:"b10",x:650,y:340,t:"std"},{id:"b11",x:765,y:340,t:"std"},{id:"b12",x:535,y:410,t:"std"},
+      {id:"b13",x:765,y:410,t:"std"},{id:"b14",x:590,y:462,t:"std"},{id:"b15",x:710,y:462,t:"key"}],
+  eB:[["b1","b4"],["b2","b4"],["b2","b5"],["b3","b5"],["b1","b6"],["b2","b6"],["b2","b7"],["b3","b7"],
+      ["b4","b8"],["b5","b8"],["b6","b8"],["b7","b8"],["b8","b9"],["b8","b10"],["b8","b11"],
+      ["b9","b12"],["b10","b12"],["b10","b13"],["b11","b13"],["b12","b14"],["b13","b15"],["b14","b15"]]};
+
+// ─ TRAQUEUR : zigzag (chemin qui alterne gauche-droite en descendant) ─
+const T_traq={
+  sA:[{id:"a1",x:190,y:38,t:"std"},{id:"a2",x:90,y:112,t:"std"},{id:"a3",x:290,y:112,t:"std"},
+      {id:"a4",x:90,y:185,t:"key"},{id:"a5",x:290,y:185,t:"std"},{id:"a6",x:130,y:258,t:"std"},
+      {id:"a7",x:250,y:258,t:"std"},{id:"a8",x:90,y:330,t:"std"},{id:"a9",x:290,y:330,t:"key"},
+      {id:"a10",x:90,y:402,t:"std"},{id:"a11",x:190,y:402,t:"std"},{id:"a12",x:290,y:402,t:"std"},
+      {id:"a13",x:90,y:462,t:"std"},{id:"a14",x:190,y:462,t:"key"},{id:"a15",x:290,y:462,t:"std"}],
+  eA:[["a1","a2"],["a1","a3"],["a2","a4"],["a3","a5"],["a4","a6"],["a5","a7"],["a4","a7"],["a5","a6"],
+      ["a6","a8"],["a7","a9"],["a8","a10"],["a9","a12"],["a8","a11"],["a9","a11"],
+      ["a10","a13"],["a11","a14"],["a12","a15"],["a13","a14"],["a15","a14"]],
+  sB:[{id:"b1",x:535,y:38,t:"std"},{id:"b2",x:765,y:38,t:"std"},{id:"b3",x:535,y:112,t:"std"},
+      {id:"b4",x:650,y:112,t:"key"},{id:"b5",x:765,y:112,t:"std"},{id:"b6",x:535,y:185,t:"std"},
+      {id:"b7",x:765,y:185,t:"std"},{id:"b8",x:650,y:258,t:"std"},{id:"b9",x:535,y:330,t:"std"},
+      {id:"b10",x:765,y:330,t:"std"},{id:"b11",x:535,y:402,t:"std"},{id:"b12",x:650,y:402,t:"std"},
+      {id:"b13",x:765,y:402,t:"std"},{id:"b14",x:535,y:462,t:"std"},{id:"b15",x:650,y:462,t:"key"}],
+  eB:[["b1","b3"],["b2","b5"],["b3","b4"],["b5","b4"],["b4","b6"],["b4","b7"],["b6","b8"],["b7","b8"],
+      ["b8","b9"],["b8","b10"],["b9","b11"],["b10","b13"],["b9","b12"],["b10","b12"],
+      ["b11","b14"],["b12","b15"],["b13","b15"],["b14","b15"]]};
+
+// ─ L'ÉVEILLÉ : void/radial (3 départs, convergence puis explosion) ─
+const T_evei={
+  sA:[{id:"a1",x:90,y:38,t:"std"},{id:"a2",x:190,y:38,t:"std"},{id:"a3",x:290,y:38,t:"std"},
+      {id:"a4",x:90,y:112,t:"std"},{id:"a5",x:290,y:112,t:"std"},{id:"a6",x:190,y:185,t:"key"},
+      {id:"a7",x:90,y:258,t:"std"},{id:"a8",x:190,y:258,t:"std"},{id:"a9",x:290,y:258,t:"std"},
+      {id:"a10",x:90,y:330,t:"std"},{id:"a11",x:290,y:330,t:"std"},{id:"a12",x:130,y:402,t:"std"},
+      {id:"a13",x:250,y:402,t:"std"},{id:"a14",x:190,y:462,t:"key"},{id:"a15",x:290,y:462,t:"std"}],
+  eA:[["a1","a4"],["a2","a4"],["a2","a5"],["a3","a5"],["a4","a6"],["a5","a6"],["a6","a7"],["a6","a8"],
+      ["a6","a9"],["a7","a10"],["a9","a11"],["a8","a12"],["a8","a13"],["a10","a12"],["a11","a13"],
+      ["a12","a14"],["a13","a14"],["a9","a15"],["a11","a15"],["a15","a14"]],
+  sB:[{id:"b1",x:650,y:38,t:"key"},{id:"b2",x:535,y:112,t:"std"},{id:"b3",x:765,y:112,t:"std"},
+      {id:"b4",x:535,y:185,t:"std"},{id:"b5",x:650,y:185,t:"std"},{id:"b6",x:765,y:185,t:"std"},
+      {id:"b7",x:535,y:258,t:"std"},{id:"b8",x:765,y:258,t:"std"},{id:"b9",x:590,y:330,t:"key"},
+      {id:"b10",x:710,y:330,t:"std"},{id:"b11",x:535,y:402,t:"std"},{id:"b12",x:650,y:402,t:"std"},
+      {id:"b13",x:765,y:402,t:"std"},{id:"b14",x:535,y:462,t:"std"},{id:"b15",x:650,y:462,t:"key"}],
+  eB:[["b1","b2"],["b1","b3"],["b2","b4"],["b2","b5"],["b3","b5"],["b3","b6"],["b4","b7"],["b6","b8"],
+      ["b5","b9"],["b7","b9"],["b7","b10"],["b8","b10"],["b9","b11"],["b9","b12"],["b10","b13"],
+      ["b11","b14"],["b12","b15"],["b13","b15"],["b14","b15"]]};
+
+
+// ─ Templates armes 2 (différentes de leur classe d'origine) ─
+
+// PRÉDATEUR w2 : Épine centrale (1 key top → 3 wide → key → 2 → 3 → key)
+const T_pred_w2={
+  sA:[{id:"a1",x:190,y:38,t:"key"},{id:"a2",x:90,y:108,t:"std"},{id:"a3",x:190,y:108,t:"std"},
+      {id:"a4",x:290,y:108,t:"std"},{id:"a5",x:90,y:178,t:"std"},{id:"a6",x:190,y:178,t:"std"},
+      {id:"a7",x:290,y:178,t:"std"},{id:"a8",x:190,y:250,t:"key"},{id:"a9",x:90,y:320,t:"std"},
+      {id:"a10",x:290,y:320,t:"std"},{id:"a11",x:90,y:392,t:"std"},{id:"a12",x:190,y:392,t:"std"},
+      {id:"a13",x:290,y:392,t:"std"},{id:"a14",x:90,y:462,t:"std"},{id:"a15",x:190,y:462,t:"key"}],
+  eA:[["a1","a2"],["a1","a3"],["a1","a4"],["a2","a5"],["a3","a6"],["a4","a7"],
+      ["a5","a8"],["a6","a8"],["a7","a8"],["a8","a9"],["a8","a10"],
+      ["a9","a11"],["a9","a12"],["a10","a12"],["a10","a13"],["a11","a14"],["a12","a15"],["a14","a15"]],
+  sB:[{id:"b1",x:650,y:38,t:"key"},{id:"b2",x:535,y:112,t:"std"},{id:"b3",x:765,y:112,t:"std"},
+      {id:"b4",x:535,y:185,t:"std"},{id:"b5",x:650,y:185,t:"std"},{id:"b6",x:765,y:185,t:"std"},
+      {id:"b7",x:535,y:258,t:"std"},{id:"b8",x:650,y:258,t:"key"},{id:"b9",x:765,y:258,t:"std"},
+      {id:"b10",x:535,y:330,t:"std"},{id:"b11",x:765,y:330,t:"std"},
+      {id:"b12",x:535,y:402,t:"std"},{id:"b13",x:650,y:402,t:"std"},{id:"b14",x:765,y:402,t:"std"},
+      {id:"b15",x:650,y:462,t:"key"}],
+  eB:[["b1","b2"],["b1","b3"],["b2","b4"],["b2","b5"],["b3","b5"],["b3","b6"],
+      ["b4","b7"],["b5","b8"],["b6","b9"],["b7","b10"],["b9","b11"],
+      ["b8","b10"],["b8","b11"],["b10","b12"],["b10","b13"],["b11","b14"],
+      ["b12","b15"],["b13","b15"],["b14","b15"]]};
+
+// OMBRE w2 : Clés alternantes (keys alternent gauche/droite)
+const T_ombr_w2={
+  sA:[{id:"a1",x:190,y:38,t:"std"},{id:"a2",x:90,y:108,t:"std"},{id:"a3",x:290,y:108,t:"std"},
+      {id:"a4",x:90,y:178,t:"key"},{id:"a5",x:290,y:178,t:"std"},{id:"a6",x:130,y:248,t:"std"},
+      {id:"a7",x:250,y:248,t:"std"},{id:"a8",x:90,y:318,t:"std"},{id:"a9",x:290,y:318,t:"key"},
+      {id:"a10",x:90,y:390,t:"std"},{id:"a11",x:190,y:390,t:"std"},{id:"a12",x:290,y:390,t:"std"},
+      {id:"a13",x:90,y:462,t:"std"},{id:"a14",x:190,y:462,t:"key"},{id:"a15",x:290,y:462,t:"std"}],
+  eA:[["a1","a2"],["a1","a3"],["a2","a4"],["a3","a5"],["a4","a6"],["a5","a7"],["a4","a7"],
+      ["a6","a8"],["a7","a9"],["a8","a10"],["a8","a11"],["a9","a11"],["a9","a12"],
+      ["a10","a13"],["a11","a14"],["a12","a15"],["a13","a14"],["a15","a14"]],
+  sB:[{id:"b1",x:535,y:38,t:"std"},{id:"b2",x:650,y:38,t:"std"},{id:"b3",x:765,y:38,t:"std"},
+      {id:"b4",x:535,y:120,t:"std"},{id:"b5",x:765,y:120,t:"std"},
+      {id:"b6",x:650,y:198,t:"key"},{id:"b7",x:535,y:268,t:"std"},{id:"b8",x:650,y:268,t:"std"},
+      {id:"b9",x:765,y:268,t:"std"},{id:"b10",x:535,y:340,t:"std"},{id:"b11",x:650,y:340,t:"key"},
+      {id:"b12",x:765,y:340,t:"std"},{id:"b13",x:535,y:462,t:"std"},
+      {id:"b14",x:650,y:462,t:"key"},{id:"b15",x:765,y:462,t:"std"}],
+  eB:[["b1","b4"],["b2","b6"],["b3","b5"],["b4","b6"],["b5","b6"],["b6","b7"],["b6","b8"],["b6","b9"],
+      ["b7","b10"],["b8","b10"],["b8","b11"],["b9","b12"],["b10","b11"],["b11","b12"],
+      ["b10","b13"],["b11","b14"],["b12","b15"],["b13","b14"],["b15","b14"]]};
+
+// REMPART w2 : Pyramide inversée (large en haut, narrow en bas)
+const T_remt_w2={
+  sA:[{id:"a1",x:90,y:38,t:"std"},{id:"a2",x:290,y:38,t:"std"},
+      {id:"a3",x:90,y:112,t:"std"},{id:"a4",x:190,y:112,t:"std"},{id:"a5",x:290,y:112,t:"std"},
+      {id:"a6",x:130,y:185,t:"std"},{id:"a7",x:250,y:185,t:"std"},
+      {id:"a8",x:90,y:258,t:"std"},{id:"a9",x:190,y:258,t:"key"},
+      {id:"a10",x:90,y:330,t:"std"},{id:"a11",x:190,y:330,t:"std"},{id:"a12",x:290,y:330,t:"std"},
+      {id:"a13",x:130,y:402,t:"std"},{id:"a14",x:250,y:402,t:"std"},{id:"a15",x:190,y:462,t:"key"}],
+  eA:[["a1","a3"],["a1","a4"],["a2","a4"],["a2","a5"],["a3","a6"],["a5","a7"],["a4","a6"],["a4","a7"],
+      ["a6","a8"],["a7","a9"],["a6","a9"],["a8","a10"],["a9","a11"],["a9","a12"],
+      ["a10","a13"],["a11","a13"],["a11","a14"],["a12","a14"],["a13","a15"],["a14","a15"]],
+  sB:[{id:"b1",x:535,y:38,t:"key"},{id:"b2",x:765,y:38,t:"key"},
+      {id:"b3",x:535,y:112,t:"std"},{id:"b4",x:650,y:112,t:"std"},{id:"b5",x:765,y:112,t:"std"},
+      {id:"b6",x:535,y:185,t:"std"},{id:"b7",x:765,y:185,t:"std"},
+      {id:"b8",x:535,y:258,t:"std"},{id:"b9",x:650,y:258,t:"key"},{id:"b10",x:765,y:258,t:"std"},
+      {id:"b11",x:535,y:330,t:"std"},{id:"b12",x:765,y:330,t:"std"},
+      {id:"b13",x:535,y:402,t:"std"},{id:"b14",x:765,y:402,t:"std"},{id:"b15",x:650,y:462,t:"key"}],
+  eB:[["b1","b3"],["b1","b4"],["b2","b4"],["b2","b5"],["b3","b6"],["b5","b7"],
+      ["b4","b9"],["b6","b8"],["b7","b10"],["b8","b9"],["b10","b9"],
+      ["b9","b11"],["b9","b12"],["b11","b13"],["b12","b14"],["b13","b15"],["b14","b15"]]};
+
+// PRÉCISION w2 : V-convergence (large en haut → pointe bas)
+const T_prec_w2={
+  sA:[{id:"a1",x:90,y:38,t:"std"},{id:"a2",x:190,y:38,t:"std"},{id:"a3",x:290,y:38,t:"std"},
+      {id:"a4",x:90,y:112,t:"std"},{id:"a5",x:290,y:112,t:"std"},
+      {id:"a6",x:130,y:185,t:"std"},{id:"a7",x:250,y:185,t:"std"},
+      {id:"a8",x:190,y:258,t:"key"},
+      {id:"a9",x:90,y:330,t:"std"},{id:"a10",x:290,y:330,t:"std"},
+      {id:"a11",x:90,y:402,t:"std"},{id:"a12",x:290,y:402,t:"std"},
+      {id:"a13",x:90,y:462,t:"std"},{id:"a14",x:190,y:462,t:"key"},{id:"a15",x:290,y:462,t:"std"}],
+  eA:[["a1","a4"],["a2","a6"],["a2","a7"],["a3","a5"],["a4","a6"],["a5","a7"],
+      ["a6","a8"],["a7","a8"],["a8","a9"],["a8","a10"],["a9","a11"],["a10","a12"],
+      ["a11","a13"],["a11","a14"],["a12","a14"],["a12","a15"],["a13","a14"],["a15","a14"]],
+  sB:[{id:"b1",x:535,y:38,t:"std"},{id:"b2",x:650,y:38,t:"std"},{id:"b3",x:765,y:38,t:"std"},
+      {id:"b4",x:535,y:112,t:"std"},{id:"b5",x:765,y:112,t:"std"},
+      {id:"b6",x:535,y:185,t:"std"},{id:"b7",x:650,y:185,t:"key"},{id:"b8",x:765,y:185,t:"std"},
+      {id:"b9",x:535,y:258,t:"std"},{id:"b10",x:765,y:258,t:"std"},
+      {id:"b11",x:535,y:330,t:"std"},{id:"b12",x:650,y:330,t:"std"},{id:"b13",x:765,y:330,t:"std"},
+      {id:"b14",x:595,y:462,t:"std"},{id:"b15",x:705,y:462,t:"key"}],
+  eB:[["b1","b4"],["b2","b7"],["b3","b5"],["b4","b6"],["b5","b8"],["b4","b7"],["b5","b7"],
+      ["b6","b9"],["b7","b10"],["b8","b10"],["b9","b11"],["b9","b12"],["b10","b12"],["b10","b13"],
+      ["b11","b14"],["b12","b14"],["b12","b15"],["b13","b15"]]};
+
+// INSTINCT w2 : Racines (large base, narrow trunk inversé)
+const T_inst_w2={
+  sA:[{id:"a1",x:190,y:38,t:"std"},
+      {id:"a2",x:130,y:112,t:"std"},{id:"a3",x:250,y:112,t:"std"},
+      {id:"a4",x:90,y:185,t:"std"},{id:"a5",x:190,y:185,t:"std"},{id:"a6",x:290,y:185,t:"std"},
+      {id:"a7",x:90,y:258,t:"key"},{id:"a8",x:190,y:258,t:"std"},{id:"a9",x:290,y:258,t:"std"},
+      {id:"a10",x:90,y:330,t:"std"},{id:"a11",x:290,y:330,t:"std"},
+      {id:"a12",x:90,y:402,t:"std"},{id:"a13",x:190,y:402,t:"std"},{id:"a14",x:290,y:402,t:"std"},
+      {id:"a15",x:190,y:462,t:"key"}],
+  eA:[["a1","a2"],["a1","a3"],["a2","a4"],["a2","a5"],["a3","a5"],["a3","a6"],
+      ["a4","a7"],["a5","a8"],["a6","a9"],["a7","a10"],["a9","a11"],["a7","a11"],
+      ["a10","a12"],["a8","a13"],["a11","a14"],["a12","a15"],["a13","a15"],["a14","a15"]],
+  sB:[{id:"b1",x:650,y:38,t:"std"},{id:"b2",x:535,y:112,t:"std"},{id:"b3",x:765,y:112,t:"std"},
+      {id:"b4",x:535,y:185,t:"std"},{id:"b5",x:650,y:185,t:"key"},{id:"b6",x:765,y:185,t:"std"},
+      {id:"b7",x:535,y:258,t:"std"},{id:"b8",x:765,y:258,t:"std"},
+      {id:"b9",x:535,y:330,t:"std"},{id:"b10",x:650,y:330,t:"std"},{id:"b11",x:765,y:330,t:"std"},
+      {id:"b12",x:535,y:402,t:"std"},{id:"b13",x:650,y:402,t:"key"},{id:"b14",x:765,y:402,t:"std"},
+      {id:"b15",x:650,y:462,t:"std"}],
+  eB:[["b1","b2"],["b1","b3"],["b2","b4"],["b2","b5"],["b3","b5"],["b3","b6"],
+      ["b4","b7"],["b6","b8"],["b5","b7"],["b5","b8"],["b7","b9"],["b8","b11"],
+      ["b9","b10"],["b9","b12"],["b10","b13"],["b11","b13"],["b11","b14"],
+      ["b12","b15"],["b13","b15"],["b14","b15"]]};
+
+// ARCANE w2 : Étoile/Cristal (pattern différent de la grille)
+const T_arca_w2={
+  sA:[{id:"a1",x:90,y:38,t:"std"},{id:"a2",x:290,y:38,t:"std"},
+      {id:"a3",x:190,y:110,t:"key"},
+      {id:"a4",x:90,y:182,t:"std"},{id:"a5",x:190,y:182,t:"std"},{id:"a6",x:290,y:182,t:"std"},
+      {id:"a7",x:90,y:254,t:"std"},{id:"a8",x:290,y:254,t:"std"},
+      {id:"a9",x:90,y:326,t:"std"},{id:"a10",x:190,y:326,t:"key"},{id:"a11",x:290,y:326,t:"std"},
+      {id:"a12",x:90,y:398,t:"std"},{id:"a13",x:290,y:398,t:"std"},
+      {id:"a14",x:90,y:462,t:"std"},{id:"a15",x:190,y:462,t:"key"}],
+  eA:[["a1","a3"],["a2","a3"],["a3","a4"],["a3","a5"],["a3","a6"],
+      ["a4","a7"],["a6","a8"],["a5","a7"],["a5","a8"],
+      ["a7","a9"],["a7","a10"],["a8","a10"],["a8","a11"],
+      ["a9","a12"],["a10","a12"],["a10","a13"],["a11","a13"],
+      ["a12","a14"],["a13","a15"],["a12","a15"],["a14","a15"]],
+  sB:[{id:"b1",x:535,y:38,t:"std"},{id:"b2",x:650,y:38,t:"key"},{id:"b3",x:765,y:38,t:"std"},
+      {id:"b4",x:535,y:120,t:"std"},{id:"b5",x:765,y:120,t:"std"},
+      {id:"b6",x:590,y:198,t:"std"},{id:"b7",x:710,y:198,t:"std"},
+      {id:"b8",x:535,y:268,t:"key"},{id:"b9",x:765,y:268,t:"key"},
+      {id:"b10",x:535,y:340,t:"std"},{id:"b11",x:765,y:340,t:"std"},
+      {id:"b12",x:535,y:410,t:"std"},{id:"b13",x:650,y:410,t:"std"},{id:"b14",x:765,y:410,t:"std"},
+      {id:"b15",x:650,y:462,t:"key"}],
+  eB:[["b1","b4"],["b2","b4"],["b2","b5"],["b3","b5"],["b1","b6"],["b2","b6"],["b2","b7"],["b3","b7"],
+      ["b4","b8"],["b6","b8"],["b7","b9"],["b5","b9"],
+      ["b8","b10"],["b9","b11"],["b10","b12"],["b10","b13"],["b11","b13"],["b11","b14"],
+      ["b12","b15"],["b13","b15"],["b14","b15"]]};
+
+// TRAQUEUR w2 : Réseau (filet avec nombreuses connexions croisées)
+const T_traq_w2={
+  sA:[{id:"a1",x:90,y:38,t:"std"},{id:"a2",x:290,y:38,t:"std"},
+      {id:"a3",x:90,y:112,t:"std"},{id:"a4",x:190,y:112,t:"key"},{id:"a5",x:290,y:112,t:"std"},
+      {id:"a6",x:90,y:185,t:"std"},{id:"a7",x:290,y:185,t:"std"},
+      {id:"a8",x:190,y:258,t:"std"},
+      {id:"a9",x:90,y:330,t:"std"},{id:"a10",x:290,y:330,t:"std"},
+      {id:"a11",x:90,y:402,t:"std"},{id:"a12",x:190,y:402,t:"key"},{id:"a13",x:290,y:402,t:"std"},
+      {id:"a14",x:90,y:462,t:"std"},{id:"a15",x:290,y:462,t:"std"}],
+  eA:[["a1","a3"],["a1","a4"],["a2","a4"],["a2","a5"],["a3","a6"],["a4","a6"],["a4","a7"],["a5","a7"],
+      ["a6","a8"],["a7","a8"],["a8","a9"],["a8","a10"],
+      ["a9","a11"],["a9","a12"],["a10","a12"],["a10","a13"],
+      ["a11","a14"],["a12","a14"],["a12","a15"],["a13","a15"]],
+  sB:[{id:"b1",x:535,y:38,t:"std"},{id:"b2",x:765,y:38,t:"std"},
+      {id:"b3",x:535,y:112,t:"std"},{id:"b4",x:650,y:112,t:"std"},{id:"b5",x:765,y:112,t:"std"},
+      {id:"b6",x:535,y:185,t:"key"},{id:"b7",x:765,y:185,t:"std"},
+      {id:"b8",x:535,y:258,t:"std"},{id:"b9",x:650,y:258,t:"std"},{id:"b10",x:765,y:258,t:"std"},
+      {id:"b11",x:535,y:330,t:"std"},{id:"b12",x:765,y:330,t:"key"},
+      {id:"b13",x:535,y:402,t:"std"},{id:"b14",x:650,y:402,t:"std"},{id:"b15",x:765,y:402,t:"std"}],
+  eB:[["b1","b3"],["b2","b5"],["b3","b4"],["b5","b4"],["b3","b6"],["b5","b7"],["b4","b6"],["b4","b7"],
+      ["b6","b8"],["b6","b9"],["b7","b9"],["b7","b10"],
+      ["b8","b11"],["b9","b11"],["b9","b12"],["b10","b12"],
+      ["b11","b13"],["b11","b14"],["b12","b14"],["b12","b15"]]};
+
+// L'ÉVEILLÉ w2 : Nébuleuse (2 keys au sommet, convergence inversée)
+const T_evei_w2={
+  sA:[{id:"a1",x:90,y:38,t:"key"},{id:"a2",x:290,y:38,t:"key"},
+      {id:"a3",x:90,y:112,t:"std"},{id:"a4",x:290,y:112,t:"std"},
+      {id:"a5",x:90,y:185,t:"std"},{id:"a6",x:190,y:185,t:"std"},{id:"a7",x:290,y:185,t:"std"},
+      {id:"a8",x:190,y:258,t:"std"},
+      {id:"a9",x:90,y:330,t:"std"},{id:"a10",x:190,y:330,t:"std"},{id:"a11",x:290,y:330,t:"std"},
+      {id:"a12",x:130,y:402,t:"std"},{id:"a13",x:250,y:402,t:"std"},
+      {id:"a14",x:190,y:462,t:"key"},{id:"a15",x:290,y:462,t:"std"}],
+  eA:[["a1","a3"],["a2","a4"],["a1","a6"],["a2","a6"],["a3","a5"],["a4","a7"],
+      ["a5","a8"],["a6","a8"],["a7","a8"],["a8","a9"],["a8","a10"],["a8","a11"],
+      ["a9","a12"],["a10","a12"],["a10","a13"],["a11","a13"],
+      ["a12","a14"],["a13","a14"],["a11","a15"],["a15","a14"]],
+  sB:[{id:"b1",x:535,y:38,t:"std"},{id:"b2",x:650,y:38,t:"std"},{id:"b3",x:765,y:38,t:"std"},
+      {id:"b4",x:535,y:112,t:"std"},{id:"b5",x:765,y:112,t:"std"},
+      {id:"b6",x:535,y:185,t:"key"},{id:"b7",x:650,y:185,t:"std"},{id:"b8",x:765,y:185,t:"key"},
+      {id:"b9",x:535,y:258,t:"std"},{id:"b10",x:765,y:258,t:"std"},
+      {id:"b11",x:535,y:330,t:"std"},{id:"b12",x:765,y:330,t:"std"},
+      {id:"b13",x:535,y:402,t:"std"},{id:"b14",x:765,y:402,t:"std"},
+      {id:"b15",x:650,y:462,t:"key"}],
+  eB:[["b1","b4"],["b2","b6"],["b3","b5"],["b4","b6"],["b5","b8"],["b6","b7"],["b8","b7"],
+      ["b6","b9"],["b8","b10"],["b7","b9"],["b7","b10"],
+      ["b9","b11"],["b10","b12"],["b11","b13"],["b12","b14"],
+      ["b13","b15"],["b14","b15"]]};
+
+/* ── ICÔNES ARMES ── */
+const SYM={oct:c=>`<polygon points="15,4 26,10 26,20 15,26 4,20 4,10" fill="none" stroke="${c}" stroke-width="1.5"/>`,dia:c=>`<polygon points="15,4 26,15 15,26 4,15" fill="none" stroke="${c}" stroke-width="1.5"/>`,tri:c=>`<polygon points="15,4 26,24 4,24" fill="none" stroke="${c}" stroke-width="1.5"/>`,cir:c=>`<circle cx="15" cy="15" r="10" fill="none" stroke="${c}" stroke-width="1.5"/>`,crs:c=>`<line x1="15" y1="5" x2="15" y2="25" stroke="${c}" stroke-width="2"/><line x1="5" y1="15" x2="25" y2="15" stroke="${c}" stroke-width="2"/>`};
+
+/* ── HELPERS DONNÉES ── */
+function buildW(name,sym,lA,lB,ct,tmpl){
+  const na=tmpl.sA.map((n,i)=>({...n,...c2n(ct[i])}));
+  const nb=tmpl.sB.map((n,i)=>({...n,...c2n(ct[15+i])}));
+  return{name,sym,lA,lB,nodes:[...na,...nb],edges:[...tmpl.eA,...tmpl.eB]};
+}
+function c2n(c){return{name:c[0],desc:c[1]||""}}
+const ph=n=>[n,"Description à venir."];
+function ab(n){return n.split(' ').map(w=>w[0]).join('').substring(0,3).toUpperCase()}
+function hexRgb(h){const r=parseInt(h.slice(1,3),16),g=parseInt(h.slice(3,5),16),b=parseInt(h.slice(5,7),16);return{r,g,b}}
+
+/* ══════════════════════════════════════════════════════════════
+   DONNÉES ─ modifier noms et descriptions ici
+   Ordre du tableau (30 entrées): a1..a15 puis b1..b15
+   Format: ["Nom","Description"] ou ph("Nom") pour placeholder
+══════════════════════════════════════════════════════════════ */
+const CLASSES=[
+
+/* ── PRÉDATEUR ── */
+(_t=T_pred,{id:"predateur",label:"PRÉDATEUR",color:"#d03818",w:[
+  W("Lame Bifide","oct","CARNAGE","TRAQUE",[
+    ["Danse des Lames",     "Active la posture dual — chaque frappe alterne entre les deux lames."],
+    ["Lacération",          "+15% vitesse d'attaque. Les frappes causent un léger saignement."],
+    ["Riposte Éclair",      "Contre-attaque instantanée après esquive parfaite — tier unique."],
+    ["Enchaînement Sauvage","Combo ×3 automatique si l'attaque est maintenue sans interruption."],
+    ["Frappe Brisée",       "La deuxième lame frappe en décalé pour maximiser les dégâts."],
+    ["Fureur Bifide",       "Active 5s de vitesse max + dégâts ×2. Les deux lames à pleine puissance."],
+    ["Déluge de Coups",     "En Fureur: 5 frappes concentrées en 1.5s sur une seule cible."],
+    ["Saignée Profonde",    "En Fureur: hémorragie sévère +8%HP/s pendant 8 secondes."],
+    ["Tempête de Lames",    "En fin de Fureur: une rafale automatique de 8 frappes supplémentaires."],
+    ["Lame Jumelle",        "Les deux lames agissent simultanément, sans délai entre chaque frappe."],
+    ["Fureur Absolue",      "Quand Fureur Bifide expire, recharge immédiatement si 5 kills ont été faits."],
+    ["Tranche-Tout",        "Toutes les attaques de la branche droite ignorent 25% de l'armure ennemie."],
+    ["Rafale Finale",       "Déclenche automatiquement 3 frappes supplémentaires après Déluge de Coups."],
+    ["Maîtrise des Lames",  "ULTIME — toutes les compétences de section A sont améliorées de 15%."],
+    ["Apothéose",           "ULTIME — enchaîne automatiquement Déluge + Saignée en une seule frappe."],
+    ["Lancer Tournoyant",   "Lance les deux lames simultanément — elles reviennent après l'impact."],
+    ["Trajectoire Courbe",  "Les lames suivent une courbe, contournant les boucliers ennemis."],
+    ["Rappel Violent",      "Les lames reviennent avec +20% de force, frappant à nouveau au retour."],
+    ["Dague Fantôme",       "La lame laisse une image fantôme qui attaque une deuxième fois."],
+    ["Maîtrise du Vol",     "Les lames peuvent être guidées manuellement en vol pendant 1 seconde."],
+    ["Vol Prolongé",        "Les lames peuvent rester en l'air 3 secondes avant de revenir."],
+    ["Impact Concentré",    "Les deux lames frappent exactement le même point: dégâts ×1.8."],
+    ["Orbite Mortelle",     "Les lames orbitent autour du joueur 3s avant de repartir sur la cible."],
+    ["Frappe Explosive",    "Quand les deux lames se rejoignent au retour, elles explosent en éclats."],
+    ["Chaîne de Lames",     "Lance les lames en chaîne: la première rappelle la deuxième automatiquement."],
+    ["Impact Multiple",     "Chaque lame frappe jusqu'à 2 ennemis supplémentaires à son retour."],
+    ["Retour Éternel",      "Les lames reviennent progressivement plus vite à chaque utilisation."],
+    ["Pluie de Lames",      "En activant Orbite, les lames se dupliquent en 4 versions pendant 2s."],
+    ["Dernier Ricochet",    "ULTIME — le dernier lancer d'une séquence est toujours garanti critique."],
+    ["Convergence Finale",  "ULTIME — toutes les lames en vol convergent sur la cible prioritaire."],
+  ]),
+  W("Hache de Guerre","dia","DESTRUCTION","IMPACT TELLURIQUE",[
+    ["Fracas Initial",      "Frappe lente et dévastatrice qui brise la garde ennemie à l'impact."],
+    ["Balayage Large",      "Frappe circulaire de 180° atteignant jusqu'à 3 ennemis simultanément."],
+    ["Coup de Pommeau",     "Frappe rapide du manche: stagger sur petits ennemis — tier unique."],
+    ["Puissance Brute",     "Chaque frappe de base inflige des dégâts de zone supplémentaires de 10%."],
+    ["Tremblement",         "Frappe au sol créant une onde de choc de 5m autour du point d'impact."],
+    ["Déchaînement",        "Active 8s de fureur: la hache devient incontrôlable mais meurtrière."],
+    ["Fracture Totale",     "En Déchaînement: chaque frappe réduit l'armure ennemie de 10%."],
+    ["Extermination",       "En Déchaînement: les dégâts de zone sont triplés en espace ouvert."],
+    ["Martèlement",         "Continue l'enchaînement après Déchaînement: +3 frappes gratuites."],
+    ["Frappe de Titan",     "Charge lente mais puissante: triple les dégâts du prochain coup."],
+    ["Furie Continue",      "Le Déchaînement peut se prolonger si la cadence de frappe est maintenue."],
+    ["Courroux Final",      "La branche droite atteint son plein potentiel: dégâts ×2.5 en fin de chaîne."],
+    ["Avalanche",           "Déclenche une série de 4 frappes de zone consécutives sans délai."],
+    ["Destruction Totale",  "ULTIME — toutes les compétences de section A s'enchaînent en combo auto."],
+    ["Frappe Absolue",      "ULTIME — une frappe unique d'une puissance égale à 5 frappes cumulées."],
+    ["Lancer de Hache",     "Lance la hache en ligne droite — traverse jusqu'à 2 ennemis."],
+    ["Arc de Frappe",       "La trajectoire suit un arc descendant, couvrant une zone plus large."],
+    ["Retour Brûlant",      "La hache revient en flammes, infligeant des dégâts de feu au retour."],
+    ["Ricochet de Feu",     "La hache enflammée rebondit sur un second ennemi avant de revenir."],
+    ["Maîtrise du Lancer",  "Guide la hache en plein vol avec précision pendant 2 secondes."],
+    ["Vol en Spirale",      "La hache spirale autour de sa trajectoire, frappant une zone élargie."],
+    ["Frappe Sismique",     "Frappe à distance avec onde de choc au point d'impact de la hache."],
+    ["Tempête de Fer",      "La hache revient en zigzag, frappant plusieurs ennemis sur son trajet."],
+    ["Impact Terminal",     "Si la hache touche un mur ou obstacle: explosion d'éclats de métal."],
+    ["Lancer Double",       "Lance deux haches consécutivement avec un délai de seulement 0.3s."],
+    ["Frappe Tonnerre",     "La hache crée un éclat sonique à l'impact, assourdissant 2 secondes."],
+    ["Percussion Totale",   "Chaque impact de hache réduit la stabilité ennemie de 15%."],
+    ["Séisme à Distance",   "L'impact au sol crée une onde sismique de 8m de diamètre."],
+    ["Onde Terminale",      "ULTIME — combine frappe sismique et retour brûlant en une seule frappe."],
+    ["Destruction Distance","ULTIME — le lancer ultime traverse tous les ennemis sur sa trajectoire."],
+  ],T_pred_w2),
+]}),
+
+/* ── OMBRE ── */
+(_t=T_ombr,{id:"ombre",label:"OMBRE",color:"#7830c8",w:[
+  W("Dagues Jumelles","crs","DANSE DES OMBRES","LAME FURTIVE",[
+    ["Entrée de l'Ombre",   "Se place dans l'angle mort de la cible. +30% dégâts au premier coup."],
+    ["Frappe Silencieuse",  "Aucun son lors de l'attaque — aucun signal pour les ennemis proches."],
+    ["Effleurement",        "Touche légère appliquant un marqueur de faiblesse — tier unique."],
+    ["Double Estocade",     "Deux frappes simultanées: une visible de face, une dans le dos."],
+    ["Fantôme Rapide",      "Déplacement de 3m avant la frappe — la cible ne l'anticipe pas."],
+    ["Forme Spectrale",     "Semi-invisible 4s: toutes les frappes sont garanties critiques."],
+    ["Mille Coupures",      "En Spectral: 8 frappes ultra-rapides en 2 secondes sur la même cible."],
+    ["Égorgement",          "En Spectral: frappe finale dévastatrice si la cible saigne."],
+    ["Voile de Sang",       "Maintient l'invisibilité si le kill est propre (aucun dégât reçu)."],
+    ["Ombre Totale",        "Pendant Forme Spectrale, totalement invisible aux systèmes de détection."],
+    ["Coup d'Éclat",        "La première frappe d'une Forme Spectrale inflige des dégâts ×3."],
+    ["Convergence",         "Les effets des deux branches de la Forme Spectrale se combinent."],
+    ["Lame du Silence",     "La cible silenciée ne peut appeler d'aide pendant 15 secondes."],
+    ["Maîtrise de l'Ombre", "ULTIME — toutes les formes d'invisibilité durent 2× plus longtemps."],
+    ["Silence Éternel",     "ULTIME — la cible peut être rendue incapable de toute action pendant 5s."],
+    ["Dague Distante",      "Lance une dague qui tire légèrement la cible vers vous."],
+    ["Filet de Métal",      "Chaîne qui immobilise la cible pendant 2 secondes."],
+    ["Dague Empoisonnée",   "DoT à distance: +5%HP/s de poison sur 6 secondes."],
+    ["Vol Guidé",           "La dague peut changer de direction une seule fois en plein vol."],
+    ["Maîtrise Secrète",    "Les dagues dévient automatiquement vers la cible la plus proche."],
+    ["Lame Acide",          "La dague empoisonnée brûle l'armure: -15% défense pendant 8s."],
+    ["Pluie de Lames",      "Lance 6 dagues en éventail couvrant une zone de 5 mètres."],
+    ["Dague Fantôme",       "La dague frappe à l'aller et à nouveau au retour sur la même cible."],
+    ["Doubles Dagues",      "Lance simultanément une dague de chaque main sur 2 cibles différentes."],
+    ["Retour Empoisonné",   "La dague empoisonnée revient avec une dose doublée de poison."],
+    ["Nuée Toxique",        "Les 6 dagues en éventail empoisonnent toute la zone d'impact."],
+    ["Danse des Reflets",   "Les dagues créent des images fantômes désorientant les ennemis."],
+    ["Filet Mortel",        "Le filet, s'il touche une cible empoisonnée, immobilise 4 secondes."],
+    ["Dague Suprême",       "ULTIME — la dernière dague d'une séquence inflige toujours un critique."],
+    ["Tempête de Dagues",   "ULTIME — lance 12 dagues en séquences rapides sur une seule cible."],
+  ]),
+  W("Faucille","cir","MOISSON","FAUCHAGE",[
+    ph("Boucle Sombre"),ph("Griffure Rapide"),ph("Crochet de Pied"),ph("Moisson Rapide"),ph("Contre-Moisson"),
+    ph("Maîtrise de Faucille"),ph("Faucheuse"),ph("Danse Macabre"),ph("Tranchant Infini"),ph("Moisson Ultime"),
+    ph("Accélération"),ph("Tempo de Moisson"),ph("Coup Final"),ph("Faucheuse Absolue"),ph("Sentence de Moisson"),
+    ph("Lancer de Faucille"),ph("Retour Magnétique"),ph("Fil Tranchant"),ph("Accroche Guidée"),ph("Orbite de Mort"),
+    ph("Retour Contrôlé"),ph("Lasso Mortel"),ph("Récolte Sanglante"),ph("Fauchage Final"),ph("Résidu Tranchant"),
+    ph("Orbite Multiple"),ph("Fauchage à Distance"),ph("Danse des Faucilles"),ph("Moisson à Distance"),ph("Fauchage Ultime"),
+  ],T_ombr_w2),
+]}),
+
+/* ── REMPART ── */
+(_t=T_remt,{id:"rempart",label:"REMPART",color:"#c89030",w:[
+  W("Épée & Bouclier","oct","FORTERESSE","RIPOSTE DIVINE",[
+    ph("Posture Défensive"),ph("Bouclier Actif"),ph("Contre-Frappe"),ph("Blocage Parfait"),ph("Couverture"),
+    ph("Forteresse"),ph("Mur de Pierre"),ph("Frappe Sacrée"),ph("Coup de Pommeau"),ph("Résistance Absolue"),
+    ph("Garde Permanente"),ph("Bouclier Brûlant"),ph("Rempart Total"),ph("Forteresse Absolue"),ph("Jugement Final"),
+    ph("Coup de Bouclier"),ph("Lancer Initial"),ph("Aura Protectrice"),ph("Aura Élargie"),ph("Ricochet Guidé"),
+    ph("Bouclier Tournoyant"),ph("Maîtrise du Lancer"),ph("Rempart de Zone"),ph("Éclat Sacré"),ph("Bouclier Explosif"),
+    ph("Aura de Protection"),ph("Lance-Bouclier"),ph("Sentence Sacrée"),ph("Bouclier Tourbillon"),ph("Riposte Finale"),
+  ]),
+  W("Marteau de Guerre","dia","FRAPPE COLOSSALE","ONDE DE CHOC",[
+    ph("Écrasement"),ph("Coup Séismique"),ph("Contre-Masse"),ph("Percussion Totale"),ph("Fracas Pur"),
+    ph("Titan Éveil"),ph("Frappe Volcanique"),ph("Onde Cataclysmique"),ph("Martèlement Infini"),ph("Titan Éternel"),
+    ph("Frappe Crushante"),ph("Furie du Titan"),ph("Punch Titanesque"),ph("Titan Absolu"),ph("Frappe Primordiale"),
+    ph("Projection Lourde"),ph("Onde Gravitaire"),ph("Impact Magnétique"),ph("Onde Élargie"),ph("Marteau Orbital"),
+    ph("Percussion Guidée"),ph("Séisme à Distance"),ph("Tempête Ferrée"),ph("Percussion Finale"),ph("Impact Multiple"),
+    ph("Onde Finale"),ph("Percussion Absolue"),ph("Séisme Total"),ph("Onde Terminale"),ph("Cataclysme"),
+  ],T_remt_w2),
+]}),
+
+/* ── PRÉCISION ── */
+(_t=T_prec,{id:"precision",label:"PRÉCISION",color:"#2878d8",w:[
+  W("Arc Long","tri","MAÎTRISE DE L'ARC","VISION AVANCÉE",[
+    ph("Posture de Visée"),ph("Tir Ajusté"),ph("Tir Rapide"),ph("Tir de Maître"),ph("Tir Silencieux"),
+    ph("Concentration Absolue"),ph("Flèche Inévitable"),ph("Tir de Précision"),ph("Tir Guidé"),ph("Trajectoire Parfaite"),
+    ph("Maîtrise des Flèches"),ph("Flèche Ultime"),ph("Sentence de l'Arc"),ph("Maîtrise Absolue"),ph("Tir Fatal"),
+    ph("Marquage"),ph("Flèche Explosive"),ph("Ralentissement"),ph("Double Marquage"),ph("Vision Étendue"),
+    ph("Flèche Empoisonnée"),ph("Vision Avancée"),ph("Nuée de Flèches"),ph("Tir Orbital"),ph("Flèche de Feu"),
+    ph("Marquage Total"),ph("Vision Suprême"),ph("Flèche Finale"),ph("Maîtrise de la Vision"),ph("Tir Absolu"),
+  ]),
+  W("Arbalète","cir","PERCE-ARMURE","TIRS MULTIPLES",[
+    ph("Verrou d'Acier"),ph("Perce-Armure Initial"),ph("Tir Silencieux"),ph("Embuscade"),ph("Tir Guidé"),
+    ph("Rafale Mortelle"),ph("Sentence"),ph("Perce-Armure Total"),ph("Tir de Précision"),ph("Tir Explosif"),
+    ph("Verrou Absolu"),ph("Tir Multiple"),ph("Perce-Armure Final"),ph("Maîtrise de l'Arbalète"),ph("Sentence Finale"),
+    ph("Carreaux Multiples"),ph("Filet de Câbles"),ph("Carreau Explosif"),ph("Filet Guidé"),ph("Tir Pénétrant"),
+    ph("Carreau Empoisonné"),ph("Maîtrise des Carreaux"),ph("Décharge Totale"),ph("Rafale Finale"),ph("Tir Multiple Guidé"),
+    ph("Carreau Final"),ph("Rafale Explosive"),ph("Décharge Absolue"),ph("Arbalète Perfectionnée"),ph("Rafale Ultime"),
+  ],T_prec_w2),
+]}),
+
+/* ── INSTINCT ── */
+(_t=T_inst,{id:"instinct",label:"INSTINCT",color:"#38a050",w:[
+  W("Bâton de Nature","tri","COMMUNION NATURELLE","VAGUE VITALE",[
+    ph("Connexion Vitale"),ph("Racines Profondes"),ph("Frappe Guérisseuse"),ph("Harmonie"),ph("Communion"),
+    ph("Éveil Primordial"),ph("Tempête Végétale"),ph("Régénération Totale"),ph("Communion Totale"),ph("Harmonie Absolue"),
+    ph("Racines Profondes II"),ph("Vie Amplifiée"),ph("Régénération Absolue"),ph("Éveil de la Nature"),ph("Vie Éternelle"),
+    ph("Vague de Soin"),ph("Pollen de Soin"),ph("Appel des Lianes"),ph("Vague Guidée"),ph("Barrière Végétale"),
+    ph("Liane Enroulante"),ph("Tsunami de Vie"),ph("Résurrection Partielle"),ph("Soin de Zone"),ph("Tsunami Total"),
+    ph("Pollen Explosif"),ph("Barrière Absolue"),ph("Vague Finale"),ph("Maîtrise du Soin"),ph("Tsunami Absolu"),
+  ]),
+  W("Griffes Animales","crs","FORME BESTIALE","INSTINCT",[
+    ph("Instinct Prédateur"),ph("Griffe Lacérante"),ph("Morsure Rapide"),ph("Assaut Sauvage"),ph("Charge Animale"),
+    ph("Forme Bestiale"),ph("Fureur Animale"),ph("Prédateur Ultime"),ph("Bête Éveillée"),ph("Instinct Absolu"),
+    ph("Charge Finale"),ph("Fureur Absolue"),ph("Prédateur Parfait"),ph("Instinct du Prédateur"),ph("Bête Primordiale"),
+    ph("Rugissement"),ph("Bond de Chasse"),ph("Marquage de Proie"),ph("Rugissement Amplifié"),ph("Instinct de Chasse"),
+    ph("Bond Guidé"),ph("Traque Sauvage"),ph("Saut Fatal"),ph("Rugissement Final"),ph("Bond Multiple"),
+    ph("Marquage Total"),ph("Traque Absolue"),ph("Instinct Final"),ph("Maîtrise de Chasse"),ph("Instinct Ultime"),
+  ],T_inst_w2),
+]}),
+
+/* ── ARCANE ── */
+(_t=T_arca,{id:"arcane",label:"ARCANE",color:"#18b890",w:[
+  W("Bâton Arcanique","dia","CANALISATION","DISTORSION",[
+    ph("Flux d'Énergie"),ph("Impulsion Arcanique"),ph("Canalisation"),ph("Distorsion Locale"),ph("Rupture Arcanique"),
+    ph("Fracture"),ph("Tempête de Mana"),ph("Convergence"),ph("Rupture du Réel"),ph("Fracture Totale"),
+    ph("Canalisation Absolue"),ph("Mana Explosif"),ph("Singularité Arcanique"),ph("Maîtrise Arcanique"),ph("Rupture Finale"),
+    ph("Projectile Arcanique"),ph("Écho d'Énergie"),ph("Invocation Mineure"),ph("Projectile Guidé"),ph("Distorsion Distance"),
+    ph("Invocation Majeure"),ph("Maîtrise des Projectiles"),ph("Pluie d'Énergie"),ph("Singularité"),ph("Projectile Final"),
+    ph("Invocation Absolue"),ph("Distorsion Finale"),ph("Écho Final"),ph("Maîtrise Absolue"),ph("Rupture Primordiale"),
+  ]),
+  W("Grimoire du Vide","cir","CORRUPTION DU NÉANT","INVOCATION",[
+    ph("Lecture du Vide"),ph("Corruption Initiale"),ph("Signe de Faiblesse"),ph("Nécrose Progressive"),ph("Abîme Ouvert"),
+    ph("Désintégration"),ph("Extinction Totale"),ph("Abîme Éternel"),ph("Néantisation"),ph("Corruption Absolue"),
+    ph("Abîme Final"),ph("Nécrose Totale"),ph("Extinction Finale"),ph("Corruption Primordiale"),ph("Abîme Primordial"),
+    ph("Spectre Invoqué"),ph("Portail Instable"),ph("Entité Contrainte"),ph("Spectre Guidé"),ph("Seigneur des Ombres"),
+    ph("Portail Stable"),ph("Légion du Néant"),ph("Manifestation"),ph("Armée du Vide"),ph("Portail Final"),
+    ph("Légion Absolue"),ph("Manifestation Finale"),ph("Armée Primordiale"),ph("Maîtrise du Vide"),ph("Légion Primordiale"),
+  ],T_arca_w2),
+]}),
+
+/* ── TRAQUEUR ── */
+(_t=T_traq,{id:"traqueur",label:"TRAQUEUR",color:"#b06030",w:[
+  W("Lame de Traqueur","oct","PISTAGE","FRAPPE GUIDÉE",[
+    ph("Pistage Initial"),ph("Frappe Opportuniste"),ph("Marque de Proie"),ph("Assaut Tracé"),ph("Pistage Avancé"),
+    ph("Extinction de la Cible"),ph("Carnage Guidé"),ph("Prédateur Parfait"),ph("Pistage Total"),ph("Extinction Absolue"),
+    ph("Traque Finale"),ph("Carnage Total"),ph("Pistage Absolu"),ph("Maîtrise du Pistage"),ph("Extinction Primordiale"),
+    ph("Flèche de Repérage"),ph("Piège à Corde"),ph("Projectile Traceur"),ph("Flèche Guidée"),ph("Vision Étendue"),
+    ph("Piège Amélioré"),ph("Vision Totale"),ph("Frappe à Distance"),ph("Tir Final Guidé"),ph("Frappe Multiple"),
+    ph("Vision Absolue"),ph("Frappe Finale"),ph("Tir Absolu"),ph("Maîtrise de la Vision"),ph("Frappe Primordiale"),
+  ]),
+  W("Harpon","tri","ANCRAGE","CÂBLE MORTEL",[
+    ph("Ancrage Initial"),ph("Retrait Brutal"),ph("Crochet de Cheville"),ph("Traîne Mortelle"),ph("Câble de Contrôle"),
+    ph("Maître du Harpon"),ph("Extraction Violente"),ph("Enchevêtrement"),ph("Emprise Totale"),ph("Câble Guidé"),
+    ph("Ancrage Absolu"),ph("Traîne Fatale"),ph("Extraction Absolue"),ph("Maîtrise du Harpon"),ph("Emprise Primordiale"),
+    ph("Lancer Initial"),ph("Percussion à Distance"),ph("Harpon Guidé"),ph("Câble Mortel"),ph("Percussion Guidée"),
+    ph("Câble Explosif"),ph("Maîtrise du Lancer"),ph("Distension Mortelle"),ph("Impact Final"),ph("Percussion Multiple"),
+    ph("Harpon Final"),ph("Distension Absolue"),ph("Impact Absolu"),ph("Maîtrise de l'Impact"),ph("Câble Primordial"),
+  ],T_traq_w2),
+]}),
+
+/* ── ★ L'ÉVEILLÉ ── */
+(_t=T_evei,{id:"eveille",label:"L'ÉVEILLÉ",color:"#c8c040",special:true,w:[
+  W("Main du Vide","crs","CORPS TRANSCENDANT","ESPRIT DU NÉANT",[
+    ["Toucher du Néant",     "Le premier contact révèle les failles intérieures de la cible."],
+    ["Résidu d'Existence",   "Laisse une trace de présence sur la cible — tier unique."],
+    ["Distorsion Corporelle","Les frappes distordent brièvement la position de la cible dans l'espace."],
+    ["Corruption Totale",    "Les attaques réduisent simultanément vie et boucliers ennemis."],
+    ["Effacement",           "La frappe efface temporairement la résistance magique de la cible."],
+    ["Transcendance",        "Dépasse les limites physiques: dégâts ignorent armure et défenses."],
+    ["Être et Néant",        "En Transcendance: attaquer et esquiver simultanément devient possible."],
+    ["Apothéose du Vide",    "En Transcendance: frappe finale qui désintègre une partie de la cible."],
+    ["Vide Total",           "Le Néant consume tout autour: zone de dégâts permanente de 3m."],
+    ["Dissolution",          "La cible perd 20% de ses compétences actives pendant 5 secondes."],
+    ["Point Zéro",           "Annule toute résistance et défense active de la cible."],
+    ["Corruption Absolue",   "La corruption se propage aux ennemis situés à moins de 4m."],
+    ["Néantisation",         "La cible disparaît brièvement du plan d'existence physique (2s)."],
+    ["Néant Vivant",         "ULTIME — le joueur transcende partiellement: corps semi-immatériel."],
+    ["Extinction du Soi",    "ULTIME — le joueur s'efface totalement du plan physique pendant 3s."],
+    ["Projection Onirique",  "Projette une image de soi à distance — la cible attaque le reflet."],
+    ["Spectre de Soi",       "Lance une version fantôme de soi-même vers la cible ennemie."],
+    ["Écho Vivant",          "Le spectre copie et exécute le dernier mouvement effectué."],
+    ["Reflet Armé",          "Le spectre peut utiliser une compétence de section A de façon autonome."],
+    ["Maître du Vide",       "Le spectre agit de manière totalement autonome pendant 5 secondes."],
+    ["Entité Liée",          "Le spectre peut lier son existence à un ennemi, le suivant partout."],
+    ["Dédoublement Fatal",   "Réel et spectre attaquent la même cible simultanément."],
+    ["Armée Spectrale",      "Jusqu'à 3 spectres simultanés, chacun agissant de façon indépendante."],
+    ["Miroir du Néant",      "Chaque spectre renvoie les dégâts reçus vers leurs sources ennemies."],
+    ["Singularité",          "Tous les spectres convergent en un point unique d'explosion totale."],
+    ["Danse des Spectres",   "Les spectres orbitent autour du joueur, frappant tout ce qui passe."],
+    ["Écho du Vide",         "Les spectres laissent des zones de néant persistantes pendant 3s."],
+    ["Entité Primordiale",   "Un spectre géant est invoqué, contrôlable directement par le joueur."],
+    ["Fusion Totale",        "ULTIME — réunit tous les spectres en un seul être de puissance max."],
+    ["Singularité Primordiale","ULTIME — la convergence crée un point de néant qui avale tout."],
+  ]),
+  W("Écho Matériel","dia","RÉSONANCE","DÉDOUBLEMENT",[
+    ph("Réminiscence"),ph("Fragment du Passé"),ph("Mémoire de Combat"),ph("Résonance Vitale"),ph("Écho Passé"),
+    ph("Harmonie Brisée"),ph("Éclat d'Existence"),ph("Convergence d'Échos"),ph("Résonance Absolue"),ph("Accord Temporel"),
+    ph("Mémoire Ancrée"),ph("Écho Amplifié"),ph("Accord Final"),ph("Maîtrise de l'Écho"),ph("Résonance Éternelle"),
+    ph("Miroir d'Ombre"),ph("Reflet Armé"),ph("Double Projection"),ph("Reflet Mortel"),ph("Maîtrise du Reflet"),
+    ph("Reflet Fantôme"),ph("Dédoublement Forcé"),ph("Armée de Reflets"),ph("Reflet Explosif"),ph("Miroir Multiple"),
+    ph("Reflet Absolu"),ph("Fusion de Reflets"),ph("Armée Finale"),ph("Maîtrise Absolue"),ph("Fusion Absolue"),
+  ],T_evei_w2),
+]})
+];
+
+/* ── ÉTAT ── */
+let S={cls:"predateur",wi:0,scale:1,tx:0,ty:0,dragging:false,dsx:0,dsy:0,panelOpen:false};
+
+/* ── COULEURS + TEINTE FOND ── */
+function setColor(c){
+  const root=document.documentElement.style;
+  root.setProperty('--cc',c);root.setProperty('--cc-d',c+'55');root.setProperty('--cc-b',c+'12');
+  const {r,g,b}=hexRgb(c);
+  document.getElementById('vglow').style.background=
+    `radial-gradient(ellipse 75% 70% at 55% 60%,rgba(${r},${g},${b},.2) 0%,transparent 65%),`+
+    `radial-gradient(ellipse 45% 40% at 18% 18%,rgba(${r},${g},${b},.07) 0%,transparent 55%)`;
+}
+
+/* ── PANNEAU ── */
+function togglePanel(){S.panelOpen=!S.panelOpen;document.getElementById('panel').classList.toggle('open',S.panelOpen);document.getElementById('toggle').classList.toggle('open',S.panelOpen)}
+function buildPanel(){
+  const cl=document.getElementById('clist');cl.innerHTML='';
+  CLASSES.forEach(cls=>{
+    if(cls.special){const d=document.createElement('div');d.className='c-sep';cl.appendChild(d)}
+    const el=document.createElement('div');
+    el.className='c-item'+(S.cls===cls.id?' active':'');
+    el.style.cssText=`--cc:${cls.color};--cc-d:${cls.color}55;--cc-b:${cls.color}12`;
+    el.textContent=(cls.special?'★ ':'')+cls.label;
+    el.onclick=()=>selectClass(cls.id);cl.appendChild(el);
+    const wl=document.createElement('div');wl.className='w-list'+(S.cls===cls.id?' open':'');wl.id='wl-'+cls.id;
+    cls.w.forEach((w,wi)=>{const we=document.createElement('div');we.className='w-item'+(S.cls===cls.id&&S.wi===wi?' active':'');we.style.cssText=`--cc:${cls.color}`;we.textContent='· '+w.name;we.onclick=e=>{e.stopPropagation();selectWeapon(cls.id,wi)};wl.appendChild(we)});
+    cl.appendChild(wl);
+  });
+}
+function selectClass(id){S.cls=id;S.wi=0;buildPanel();renderAll();document.getElementById('wl-'+id).classList.add('open')}
+function selectWeapon(id,wi){S.cls=id;S.wi=wi;buildPanel();renderAll()}
+
+/* ── TOP BAR ── */
+function renderTopBar(cls,wpn){
+  const wi=document.getElementById('wicons');wi.innerHTML='';
+  cls.w.forEach((w,i)=>{const b=document.createElement('div');b.className='wicon'+(S.wi===i?' active':'');b.innerHTML=`<svg viewBox="0 0 30 30" width="20" height="20">${SYM[w.sym](cls.color+(S.wi===i?'':'44'))}</svg>`;b.onclick=()=>selectWeapon(cls.id,i);wi.appendChild(b)});
+  document.getElementById('wname').textContent=wpn.name;
+}
+
+/* ── ARBRE SVG ── */
+function renderTree(cls,wpn){
+  const c=cls.color;
+  let h=`<defs><filter id="gw" x="-80%" y="-80%" width="260%" height="260%"><feGaussianBlur in="SourceGraphic" stdDeviation="3.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>`;
+  // Labels de section
+  h+=`<text x="205" y="18" text-anchor="middle" font-size="9" letter-spacing="3" font-family="Georgia,serif" fill="${c}" fill-opacity=".42">${wpn.lA}</text>`;
+  h+=`<text x="640" y="18" text-anchor="middle" font-size="9" letter-spacing="3" font-family="Georgia,serif" fill="${c}" fill-opacity=".42">${wpn.lB}</text>`;
+  // Arêtes
+  wpn.edges.forEach(([fi,ti])=>{const f=wpn.nodes.find(n=>n.id===fi),t=wpn.nodes.find(n=>n.id===ti);if(f&&t)h+=`<line x1="${f.x}" y1="${f.y}" x2="${t.x}" y2="${t.y}" stroke="${c}" stroke-opacity=".2" stroke-width="1.5"/>`});
+  // Nœuds (cercles)
+  // Niveau requis calculé depuis la position verticale (plus bas = niveau plus élevé)
+  const getLvl=y=>{if(y<80)return 1;if(y<160)return 15;if(y<230)return 30;if(y<300)return 50;if(y<370)return 65;if(y<440)return 80;return 100};
+  wpn.nodes.forEach(n=>{
+    const r=n.t==='key'?23:18,label=ab(n.name),lvl=getLvl(n.y);
+    h+=`<g class="nd" data-name="${n.name.replace(/"/g,"'")}" data-desc="${(n.desc||'').replace(/"/g,"'")}" data-t="${n.t}" data-lvl="${lvl}">`;
+    if(n.t==='key')h+=`<circle cx="${n.x}" cy="${n.y}" r="${r+7}" fill="none" stroke="${c}" stroke-opacity=".1" stroke-width=".8"/>`;
+    h+=`<circle cx="${n.x}" cy="${n.y}" r="${r}" fill="${c}" fill-opacity=".07" stroke="${c}" stroke-opacity=".38" stroke-width="1.5" class="nc"/>`;
+    h+=`<circle cx="${n.x}" cy="${n.y}" r="${n.t==='key'?4:2.5}" fill="${c}" fill-opacity=".22"/>`;
+    h+=`<text x="${n.x}" y="${n.y+1}" text-anchor="middle" dominant-baseline="middle" font-size="${n.t==='key'?7:6}" font-family="Georgia,serif" fill="${c}" fill-opacity=".48" letter-spacing=".5">${label}</text>`;
+    h+=`</g>`;
+  });
+  document.getElementById('tsvg').innerHTML=h;
+  attachListeners(c);
+}
+function attachListeners(c){
+  document.querySelectorAll('.nd').forEach(g=>{
+    const ci=g.querySelector('.nc'),isKey=g.dataset.t==='key';
+    g.addEventListener('mouseenter',e=>{if(S.dragging)return;ci.setAttribute('stroke-opacity','1');ci.setAttribute('stroke-width','2.5');ci.setAttribute('fill-opacity','.17');ci.setAttribute('filter','url(#gw)');showTT(g.dataset.name,g.dataset.desc,isKey,g.dataset.lvl)});
+    g.addEventListener('mousemove',e=>{if(!S.dragging)moveTT(e)});
+    g.addEventListener('mouseleave',()=>{ci.setAttribute('stroke-opacity','.38');ci.setAttribute('stroke-width','1.5');ci.setAttribute('fill-opacity','.07');ci.removeAttribute('filter');hideTT()});
+  });
+}
+
+/* ── TOOLTIP ── */
+function showTT(n,d,k,lvl){
+  document.getElementById('tt-type').textContent=k?'⊙ COMPÉTENCE CLÉ':'○ COMPÉTENCE';
+  document.getElementById('tt-name').textContent=n;
+  const lvlEl=document.getElementById('tt-lvl');
+  lvlEl.textContent=lvl?`— Niveau ${lvl} nécessaire`:'';
+  lvlEl.style.display=lvl?'block':'none';
+  document.getElementById('tt-desc').textContent=d||'Description à venir.';
+  document.getElementById('tt').classList.add('vis');
+}
+function hideTT(){document.getElementById('tt').classList.remove('vis')}
+function moveTT(e){const t=document.getElementById('tt');t.style.left=Math.min(e.clientX+16,innerWidth-t.offsetWidth-5)+'px';t.style.top=Math.max(5,Math.min(e.clientY-t.offsetHeight/2,innerHeight-t.offsetHeight-5))+'px'}
+
+/* ── ZOOM + PAN ── */
+const tc=document.getElementById('tc'),wrap=document.getElementById('tsvg-wrap');
+function applyT(){wrap.style.transform=`translate(${S.tx}px,${S.ty}px) scale(${S.scale})`}
+function initCenter(){const r=tc.getBoundingClientRect();S.tx=(r.width-840)/2;S.ty=(r.height-500)/2;applyT()}
+tc.addEventListener('wheel',e=>{e.preventDefault();const r=tc.getBoundingClientRect(),mx=e.clientX-r.left,my=e.clientY-r.top,f=e.deltaY>0?.88:1.14,ns=Math.max(.22,Math.min(5,S.scale*f)),ra=ns/S.scale;S.tx=mx-ra*(mx-S.tx);S.ty=my-ra*(my-S.ty);S.scale=ns;applyT()},{passive:false});
+function doZoom(f){const r=tc.getBoundingClientRect(),mx=r.width/2,my=r.height/2,ns=Math.max(.22,Math.min(5,S.scale*f)),ra=ns/S.scale;S.tx=mx-ra*(mx-S.tx);S.ty=my-ra*(my-S.ty);S.scale=ns;applyT()}
+tc.addEventListener('mousedown',e=>{S.dragging=true;S.dsx=e.clientX-S.tx;S.dsy=e.clientY-S.ty;hideTT()});
+tc.addEventListener('mousemove',e=>{if(!S.dragging)return;S.tx=e.clientX-S.dsx;S.ty=e.clientY-S.dsy;applyT()});
+tc.addEventListener('mouseup',()=>{S.dragging=false});
+tc.addEventListener('mouseleave',()=>{S.dragging=false});
+tc.addEventListener('touchstart',e=>{const t=e.touches[0];S.dragging=true;S.dsx=t.clientX-S.tx;S.dsy=t.clientY-S.ty},{passive:true});
+tc.addEventListener('touchmove',e=>{if(!S.dragging)return;e.preventDefault();const t=e.touches[0];S.tx=t.clientX-S.dsx;S.ty=t.clientY-S.dsy;applyT()},{passive:false});
+tc.addEventListener('touchend',()=>{S.dragging=false},{passive:true});
+
+/* ── RENDER + INIT ── */
+function renderAll(){const cls=CLASSES.find(c=>c.id===S.cls),wpn=cls.w[S.wi];setColor(cls.color);renderTopBar(cls,wpn);renderTree(cls,wpn)}
+buildPanel();renderAll();initCenter();window.addEventListener('resize',initCenter);
+</script>
+</body>
+</html>

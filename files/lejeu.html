@@ -79,6 +79,31 @@
     .card-text { font-family:'Cormorant Garamond',serif; font-style:italic; font-size:1rem; color:var(--text-dim); line-height:1.7; }
     @keyframes fadeUp { from{opacity:0;transform:translateY(24px)} to{opacity:1;transform:translateY(0)} }
 
+    /* ─── Sections détaillées ─── */
+    .detail-section { position:relative; z-index:2; padding:6rem 2rem; display:flex; justify-content:center; }
+    .detail-section:nth-child(odd) { background: rgba(15,8,35,0.25); }
+    .detail-inner { max-width:860px; width:100%; }
+    .detail-title {
+        font-family:'Metamorphous',cursive;
+        font-size:clamp(2rem,5vw,3.2rem);
+        letter-spacing:0.06em;
+        background:linear-gradient(180deg, var(--eerie-glow), var(--nebula-magenta));
+        -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;
+        filter:drop-shadow(0 0 20px rgba(196,79,160,0.35));
+        margin-bottom:2.5rem; text-align:center;
+    }
+    .detail-text { font-family:'Cormorant Garamond',serif; font-size:clamp(1.05rem,2vw,1.3rem); color:#b3a6cc; line-height:2; margin-bottom:1.8rem; text-align:center; }
+    .detail-cols { display:flex; flex-wrap:wrap; gap:1.5rem; margin-top:2.5rem; justify-content:center; }
+    .detail-col { flex:1; min-width:220px; max-width:280px; background:rgba(15,8,35,0.5); border:1px solid rgba(156,107,222,0.18); border-radius:8px; padding:1.6rem 1.8rem; backdrop-filter:blur(6px); transition:border-color 0.4s, box-shadow 0.4s; }
+    .detail-col:hover { border-color:rgba(179,136,255,0.45); box-shadow:0 0 22px rgba(156,107,222,0.15); }
+    .detail-col-icon { font-size:1.6rem; margin-bottom:0.8rem; }
+    .detail-col-title { font-family:'Cinzel',serif; font-size:0.88rem; font-weight:700; color:var(--text-pale); margin-bottom:0.6rem; letter-spacing:0.05em; }
+    .detail-col-text { font-family:'Cormorant Garamond',serif; font-style:italic; font-size:0.98rem; color:var(--text-dim); line-height:1.75; }
+    .horror-quote { font-family:'Cormorant Garamond',serif; font-style:italic; font-size:clamp(1.2rem,2.5vw,1.6rem); color:rgba(179,136,255,0.5); text-align:center; margin:2rem 0; letter-spacing:0.03em; }
+    .horror-quote::before { content:'❝ '; } .horror-quote::after { content:' ❞'; }
+    .iframe-wrapper { position:relative; width:100%; height:520px; border:1px solid rgba(156,107,222,0.2); border-radius:10px; overflow:hidden; margin-top:2rem; box-shadow:0 0 40px rgba(107,63,160,0.2); }
+    .iframe-wrapper iframe { width:100%; height:100%; border:none; display:block; }
+    .classes-hint { font-family:'Cinzel',serif; font-size:0.72rem; letter-spacing:0.1em; text-transform:uppercase; color:var(--text-dim); text-align:center; margin-top:1rem; opacity:0.6; }
 
 </style>
 </head>
@@ -123,26 +148,26 @@
             <p class="section-text reveal">Trou de Verre N°4 est un serveur Minecraft survie-horreur en mode MMORPG. Le monde est plat en apparence — mais ce que cache sa surface n'a rien d'ordinaire.</p>
 
             <div class="cards-grid">
-                <div class="card reveal">
+                <a href="#monde" class="card reveal" style="text-decoration:none;cursor:pointer;">
                     <div class="card-icon">🌑</div>
                     <p class="card-title">Le Monde</p>
                     <p class="card-text">Un monde plat aux biomes variés, délimité par un mur de ciel. En dessous : le Void. Au-dessus : une illusion.</p>
-                </div>
-                <div class="card reveal">
+                </a>
+                <a href="#survie" class="card reveal" style="text-decoration:none;cursor:pointer;">
                     <div class="card-icon">⚔️</div>
                     <p class="card-title">La Survie</p>
                     <p class="card-text">Chaque blessure est réelle. Chaque nuit apporte ce qu'on n'ose pas nommer. Les choix ont des conséquences.</p>
-                </div>
-                <div class="card reveal">
+                </a>
+                <a href="#ascension" class="card reveal" style="text-decoration:none;cursor:pointer;">
                     <div class="card-icon">📜</div>
                     <p class="card-title">L'Ascension</p>
                     <p class="card-text">Progressez, forgez des alliances, explorez les strates. Certains franchissent les frontières du monde.</p>
-                </div>
-                <div class="card reveal">
+                </a>
+                <a href="#horreur" class="card reveal" style="text-decoration:none;cursor:pointer;">
                     <div class="card-icon">👁️</div>
                     <p class="card-title">L'Horreur</p>
                     <p class="card-text">Quand la nuit tombe… elle ne tombe pas seule. Ce qui rôde n'est pas dans les logs du serveur.</p>
-                </div>
+                </a>
             </div>
         </div>
     </section>
@@ -153,6 +178,128 @@
             <h2 class="section-title reveal">Mécaniques de jeu</h2>
             <p class="section-text reveal">Survie hardcore personnalisée · Système de rôles évolutif · Événements saisonniers · Économie joueur · Guildes & alliances · Donjons et boss custom</p>
             <p class="section-text reveal" style="font-size:1rem;opacity:0.5;margin-top:1rem;">— Plus de détails à venir —</p>
+        </div>
+    </section>
+
+
+    <!-- ═══════════════ LE MONDE ═══════════════ -->
+    <section class="detail-section" id="monde">
+        <div class="detail-inner">
+            <div class="section-divider reveal"><span>🌑</span></div>
+            <h2 class="detail-title reveal">Le Monde</h2>
+            <p class="detail-text reveal">La surface du monde semble ordinaire — des plaines, des forêts, des marais. Mais chaque biome cache quelque chose. Le terrain ne ment pas toujours, mais il dissimule.</p>
+            <div class="detail-cols">
+                <div class="detail-col reveal">
+                    <div class="detail-col-icon">🏔️</div>
+                    <p class="detail-col-title">La Surface</p>
+                    <p class="detail-col-text">Des biomes variés s'étendent à perte de vue — forêts corrompues, plaines arides, marécages silencieux. Chaque zone a ses règles, ses dangers, ses ressources.</p>
+                </div>
+                <div class="detail-col reveal">
+                    <div class="detail-col-icon">🌌</div>
+                    <p class="detail-col-title">Le Mur de Ciel</p>
+                    <p class="detail-col-text">Aux extrémités du monde s'élève une frontière invisible. Nul ne sait ce qu'il y a derrière. Certains explorateurs se sont approchés. Peu sont revenus pour en parler.</p>
+                </div>
+                <div class="detail-col reveal">
+                    <div class="detail-col-icon">🕳️</div>
+                    <p class="detail-col-title">Le Void</p>
+                    <p class="detail-col-text">Sous chaque bloc de pierre, sous chaque couche de terre, se trouve le néant. Tomber dans le Void n'est pas mourir — c'est disparaître. Personne ne revient du Void.</p>
+                </div>
+                <div class="detail-col reveal">
+                    <div class="detail-col-icon">🔮</div>
+                    <p class="detail-col-title">Les Strates</p>
+                    <p class="detail-col-text">Entre la surface et le Void existent des couches cachées — des strates que peu ont explorées. Chacune renferme des secrets, des ressources rares, et quelque chose qui n'attend que vous.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════ LA SURVIE ═══════════════ -->
+    <section class="detail-section" id="survie">
+        <div class="detail-inner">
+            <div class="section-divider reveal"><span>⚔️</span></div>
+            <h2 class="detail-title reveal">La Survie</h2>
+            <p class="detail-text reveal">Survivre sur Trou de Verre N°4 n'est pas un défi — c'est une épreuve. Chaque décision compte. Chaque allié peut devenir un ennemi. Chaque nuit peut être la dernière.</p>
+            <div class="detail-cols">
+                <div class="detail-col reveal">
+                    <div class="detail-col-icon">❤️</div>
+                    <p class="detail-col-title">Santé & Faim</p>
+                    <p class="detail-col-text">Les mécaniques de survie sont personnalisées et renforcées. Se nourrir, se soigner, se reposer — tout demande des ressources. Négliger l'un finit par tuer l'autre.</p>
+                </div>
+                <div class="detail-col reveal">
+                    <div class="detail-col-icon">💀</div>
+                    <p class="detail-col-title">La Mort</p>
+                    <p class="detail-col-text">Mourir a des conséquences. Vous perdez expérience, objets, parfois progression. Choisissez vos batailles — certaines ne valent pas le prix à payer.</p>
+                </div>
+                <div class="detail-col reveal">
+                    <div class="detail-col-icon">🤝</div>
+                    <p class="detail-col-title">Alliances</p>
+                    <p class="detail-col-text">Rejoignez une guilde, forgez des pactes, construisez des bases communes. La force du nombre est réelle — mais la trahison aussi. Choisissez vos alliés avec soin.</p>
+                </div>
+                <div class="detail-col reveal">
+                    <div class="detail-col-icon">🌙</div>
+                    <p class="detail-col-title">Les Nuits</p>
+                    <p class="detail-col-text">La nuit sur TdV N°4 n'est pas celle de Minecraft vanilla. Ce qui apparaît après le coucher du soleil va au-delà des monstres ordinaires. Rentrez avant l'obscurité.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════ L'ASCENSION ═══════════════ -->
+    <section class="detail-section" id="ascension">
+        <div class="detail-inner">
+            <div class="section-divider reveal"><span>📜</span></div>
+            <h2 class="detail-title reveal">L'Ascension</h2>
+            <p class="detail-text reveal">Progresser, c'est choisir. Chaque niveau débloque des possibilités — mais aucune voie ne mène au même endroit. Choisissez votre classe, forgez votre spécialité, et gravissez les strates du pouvoir.</p>
+            <div class="detail-cols" style="margin-bottom:2.5rem;">
+                <div class="detail-col reveal">
+                    <div class="detail-col-icon">⚗️</div>
+                    <p class="detail-col-title">8 Classes</p>
+                    <p class="detail-col-text">Prédateur, Ombre, et six autres spécialités aux styles radicalement différents. Chaque classe possède ses propres arbres de compétences et ses armes de prédilection.</p>
+                </div>
+                <div class="detail-col reveal">
+                    <div class="detail-col-icon">🌿</div>
+                    <p class="detail-col-title">Arbre de Compétences</p>
+                    <p class="detail-col-text">Deux branches par arme, des nœuds clés qui redéfinissent votre style de combat. Chaque compétence débloquée à partir du niveau 1 jusqu'au niveau 100.</p>
+                </div>
+                <div class="detail-col reveal">
+                    <div class="detail-col-icon">🏆</div>
+                    <p class="detail-col-title">Jalons de Niveau</p>
+                    <p class="detail-col-text">Niveaux 1, 15, 30, 50, 65, 80, 100 — chaque palier déverrouille de nouvelles compétences et ouvre des zones inaccessibles aux moins expérimentés.</p>
+                </div>
+            </div>
+            <p class="detail-text reveal" style="font-size:1rem;opacity:0.7;">Explorez l'arbre de compétences interactif — survolez les nœuds, zoomez, naviguez entre les classes.</p>
+            <div class="iframe-wrapper reveal">
+                <iframe src="../Progression/competences-v4.html" title="Arbre de compétences TdV N°4" loading="lazy"></iframe>
+            </div>
+            <p class="classes-hint reveal">Cliquez sur › pour ouvrir le panneau des spécialités · Molette pour zoomer · Glisser pour naviguer</p>
+        </div>
+    </section>
+
+    <!-- ═══════════════ L'HORREUR ═══════════════ -->
+    <section class="detail-section" id="horreur">
+        <div class="detail-inner">
+            <div class="section-divider reveal"><span>👁️</span></div>
+            <h2 class="detail-title reveal">L'Horreur</h2>
+            <p class="detail-text reveal">Il y a ce que le serveur affiche dans les logs. Et il y a ce qui se passe vraiment. Deux choses très différentes.</p>
+            <p class="horror-quote reveal">Ce qui rôde la nuit ne figure dans aucune commande /list.</p>
+            <div class="detail-cols">
+                <div class="detail-col reveal">
+                    <div class="detail-col-icon">🌑</div>
+                    <p class="detail-col-title">Les Entités</p>
+                    <p class="detail-col-text">Des créatures custom peuplent le serveur — certaines visibles, d'autres non. Elles ont des comportements, des mémoires, des territories. Elles apprennent.</p>
+                </div>
+                <div class="detail-col reveal">
+                    <div class="detail-col-icon">📡</div>
+                    <p class="detail-col-title">Les Événements</p>
+                    <p class="detail-col-text">Des événements saisonniers et nocturnes bouleversent les règles du jeu. Certains arrivent sans prévenir. Certains ne repartent jamais vraiment.</p>
+                </div>
+                <div class="detail-col reveal">
+                    <div class="detail-col-icon">📖</div>
+                    <p class="detail-col-title">Le Lore Caché</p>
+                    <p class="detail-col-text">Des fragments d'histoire sont dissimulés dans le monde — dans des coffres oubliés, sur des panneaux illisibles, dans les patterns du terrain. Tout a une explication. Peu la trouvent.</p>
+                </div>
+            </div>
+            <p class="horror-quote reveal" style="margin-top:3rem;font-size:1rem;opacity:0.35;">Ne regardez pas en dessous du monde.</p>
         </div>
     </section>
 
