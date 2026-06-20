@@ -114,6 +114,13 @@
         width: 2px;
         background: linear-gradient(to bottom, transparent, rgba(156, 107, 222, 0.45), transparent);
         border-radius: 2px;
+        opacity: 1;
+        transition: opacity 0.3s ease;
+    }
+    /* La ligne s'efface une fois qu'on est dans la zone d'interaction (sidebar ouverte) */
+    .sidebar-zone:hover::after,
+    .sidebar-zone.open::after {
+        opacity: 0;
     }
     .sidebar {
         position: absolute;
@@ -163,6 +170,73 @@
         font-size: 0.55rem;
         letter-spacing: 0.05em;
         text-transform: uppercase;
+    }
+
+    /* Bouton de bascule — affiché uniquement sur écrans tactiles */
+    .sidebar-toggle {
+        display: none;
+    }
+
+    /* ─── Adaptation tactile (mobile/tablette) : remplace le survol par un vrai bouton ─── */
+    @media (hover: none), (pointer: coarse) {
+        .sidebar-zone::after { display: none; } /* supprime la ligne décorative parasite */
+        .sidebar-zone:hover .sidebar { transform: translateY(-50%) translateX(-100%); } /* neutralise le hover fantôme */
+
+        .sidebar-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: fixed;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 32px;
+            min-height: 56px;
+            background: rgba(4, 3, 8, 0.82);
+            backdrop-filter: blur(14px);
+            border: 1px solid rgba(156, 107, 222, 0.3);
+            border-left: none;
+            border-radius: 0 10px 10px 0;
+            color: var(--eerie-glow);
+            z-index: 11;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .sidebar-toggle svg {
+            width: 18px; height: 18px;
+            stroke: currentColor; fill: none;
+            stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
+            transition: transform 0.35s cubic-bezier(.4,0,.2,1);
+        }
+        .sidebar-zone.open .sidebar-toggle svg {
+            transform: rotate(180deg);
+        }
+        .sidebar {
+            background: rgba(4, 3, 8, 0.94);
+            backdrop-filter: blur(18px);
+            box-shadow: 6px 0 30px rgba(0, 0, 0, 0.5);
+            transition: transform 0.38s cubic-bezier(.4,0,.2,1);
+            padding: 0.5rem;
+        }
+        .sidebar-zone.open .sidebar {
+            transform: translateY(-50%) translateX(0);
+        }
+        /* Zones tactiles agrandies — 48px minimum recommandé */
+        .sidebar-link {
+            min-width: 48px;
+            min-height: 48px;
+            justify-content: center;
+            padding: 0.7rem 0.95rem;
+        }
+        .sidebar-link svg { width: 24px; height: 24px; }
+        .sidebar-link span { font-size: 0.58rem; }
+    }
+
+    /* ─── Navbar : resserrée sur petits écrans ─── */
+    @media (max-width: 560px) {
+        .navbar { padding: 0.7rem 1.1rem; }
+        .nav-logo { font-size: 0.92rem; }
+        .nav-links { gap: 1.1rem; }
+        .nav-links a { font-size: 0.62rem; letter-spacing: 0.06em; padding: 0.3rem 0; }
     }
 
     /* ─── Brume globale (tout l'écran) ─── */
@@ -396,6 +470,23 @@
         opacity: 0;
         animation: fadeUp 1.6s ease forwards 1.7s;
     }
+
+    /* Badge de genre — clarifie immédiatement la nature du projet */
+    .genre-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.6rem;
+        font-family: 'Cinzel', serif;
+        font-size: clamp(0.62rem, 1.6vw, 0.78rem);
+        letter-spacing: 0.22em;
+        text-transform: uppercase;
+        color: var(--text-dim);
+        margin: 0.4rem 0 1.8rem;
+        opacity: 0;
+        animation: fadeUp 1.6s ease forwards 1.3s;
+    }
+    .genre-badge .sep { color: var(--nebula-violet); opacity: 0.6; }
+    .genre-badge .hl { color: var(--eerie-glow); text-shadow: 0 0 10px rgba(179,136,255,0.4); }
 
     /* Indicateur de scroll */
     .scroll-hint {
@@ -680,6 +771,20 @@
         font-style: italic;
     }
 
+    /* ─── Adaptation tactile : les cards équipe se dépliaient seulement au survol (inaccessible sur mobile) ─── */
+    @media (hover: none), (pointer: coarse) {
+        .team-card:hover { max-height: 52px; }
+        .team-card:hover .team-details { opacity: 0; }
+        .team-card.expanded { max-height: 420px; }
+        .team-card.expanded .team-details { opacity: 1; }
+        .team-name::after {
+            content: ' ▾';
+            font-size: 0.75rem;
+            color: var(--text-dim);
+        }
+        .team-card.expanded .team-name::after { content: ' ▴'; }
+    }
+
     /* ─── Section REJOINDRE ─── */
     .join {
         position: relative;
@@ -789,18 +894,21 @@
         </div>
     </nav>
 
-    <!-- Sidebar coulissante (survol du bord gauche) -->
+    <!-- Sidebar coulissante (survol du bord gauche sur desktop / tap sur mobile) -->
     <div class="sidebar-zone" id="sidebar-zone">
-        <aside class="sidebar">
-            <a href="files/lejeu.html" class="sidebar-link" title="Explication du jeu">
+        <button class="sidebar-toggle" id="sidebar-toggle" aria-label="Ouvrir le menu de navigation" aria-expanded="false">
+            <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+        </button>
+        <aside class="sidebar" role="navigation" aria-label="Navigation principale">
+            <a href="files/lejeu.html" class="sidebar-link" title="Explication du jeu" aria-label="Le Jeu">
                 <svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>
                 <span>Le Jeu</span>
             </a>
-            <a href="files/jouer.html" class="sidebar-link" title="Rejoindre le serveur">
+            <a href="files/jouer.html" class="sidebar-link" title="Rejoindre le serveur" aria-label="Jouer">
                 <svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>
                 <span>Jouer</span>
             </a>
-            <a href="files/boutique.html" class="sidebar-link" title="Boutique cosmétiques">
+            <a href="files/boutique.html" class="sidebar-link" title="Boutique cosmétiques" aria-label="Boutique">
                 <svg viewBox="0 0 24 24"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
                 <span>Boutique</span>
             </a>
@@ -874,6 +982,8 @@
                     <span class="nb">N°4</span>
                 </h1>
             </div>
+
+            <p class="genre-badge"><span class="hl">Minecraft</span><span class="sep">·</span><span class="hl">MMORPG</span><span class="sep">·</span><span class="hl">Survie-Horreur</span></p>
 
             <div class="divider"></div>
             <p class="tagline">« Il y a des vérités que la lumière ne devrait pas révéler. »</p>
@@ -1153,6 +1263,34 @@
             if (dismissed || dismissing || touchStartY === null) return;
             if (touchStartY - e.touches[0].clientY > 12) startDismiss();
         }, { passive: true });
+
+        // ─── Sidebar : bouton tap-to-toggle (mobile/tactile) ───
+        const sidebarZoneEl = document.getElementById('sidebar-zone');
+        const sidebarToggleBtn = document.getElementById('sidebar-toggle');
+        if (sidebarToggleBtn && sidebarZoneEl) {
+            sidebarToggleBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const isOpen = sidebarZoneEl.classList.toggle('open');
+                sidebarToggleBtn.setAttribute('aria-expanded', String(isOpen));
+            });
+            // Ferme la sidebar si on tape en dehors
+            document.addEventListener('click', (e) => {
+                if (sidebarZoneEl.classList.contains('open') && !sidebarZoneEl.contains(e.target)) {
+                    sidebarZoneEl.classList.remove('open');
+                    sidebarToggleBtn.setAttribute('aria-expanded', 'false');
+                }
+            });
+        }
+
+        // ─── Cards équipe : tap-to-expand sur tactile (le survol n'existe pas sur mobile) ───
+        if (window.matchMedia('(hover: none), (pointer: coarse)').matches) {
+            document.querySelectorAll('.team-card').forEach(card => {
+                card.addEventListener('click', () => {
+                    document.querySelectorAll('.team-card').forEach(c => { if (c !== card) c.classList.remove('expanded'); });
+                    card.classList.toggle('expanded');
+                });
+            });
+        }
 
         // ─── Skins Minecraft 3D ───
         const skinScript = document.createElement('script');
